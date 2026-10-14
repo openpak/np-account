@@ -1,0 +1,4 @@
+.env
+/np-account
+/dist
+*.log
