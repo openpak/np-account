@@ -6,8 +6,9 @@ translates it into calls on the central [`account`](../account) core. It **owns 
 passwords, no accounts, no links. The core stays console-agnostic; everything Sony-shaped lives here,
 the same split as [`nn-account`](../nn-account) for Wii U/3DS.
 
-Status: first cut, 2026-10-14. Passes its tests against an in-process fake core. **Nothing has been
-tried against a real console or a firmware capture yet**, so every wire shape below is UNCONFIRMED.
+Status, 2026-10-15: the sign-in the XMB actually performs (`/native/reg/getCountries.action`, `/native/reg/bindAccount.action`, binary TLV
+replies) is served and unit-tested, and was captured from the firmware in the Pier lab. The OAuth and console-token routes below were **not requested**
+by that flow and remain UNCONFIRMED. `cmd/np-account-lab` runs everything against a fake core for the lab.
 
 Design: [`docs/ps3/np-account-design.md`](../docs/ps3/np-account-design.md). Wire facts (from firmware
 strings, not from a capture): [`docs/ps3/psn-signin-findings.md`](../docs/ps3/psn-signin-findings.md).
@@ -64,6 +65,8 @@ There are no defaults for secrets; startup fails naming the missing ones. Tests 
 | `GET /networktest/get_2m` | 2 MiB of a fixed repeating byte pattern |
 | `POST /networktest/post`, `/networktest/post_128` | read and discard the body (first 16 MiB), `200` empty |
 | `GET /networktest/trial.txt` | `OK\n` |
+| `POST /native/reg/getCountries.action` | binary TLV country list (see `docs/ps3/psn-signin-findings.md`) |
+| `POST /native/reg/bindAccount.action` | `username` (email) + `password` -> core `VerifyPassword`; success = TLV element `0x5e` (account id, online ID, country, language, NP credential blob); bad password = result byte `0x14`, suspended = `0x1b`. 2FA accounts are refused (no field for it) |
 | `GET /healthz` | `ok` |
 
 `X-NP-CONSOLE-TOKEN`, when present on token/authorize requests, must be a console token this server
