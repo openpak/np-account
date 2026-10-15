@@ -322,3 +322,42 @@ func (s *Service) CheckConsoleToken(v string) *Error {
 	}
 	return nil
 }
+
+// NativeIdentity is the result of a native-API sign-in (POST /native/reg/bindAccount.action).
+type NativeIdentity struct {
+	AccountID  string // core account id
+	LinkID     string
+	OnlineID   string
+	Country    string // lower-case ISO code, "us" when unknown
+	Credential []byte // 32-byte NP credential blob
+}
+
+// NativeSignIn checks an email and password and returns the account's np identity, creating the link
+// on first sign-in when NP_AUTO_ONLINE_ID is set. Accounts with a second factor cannot sign in here:
+// the native form has no field for it.
+func (s *Service) NativeSignIn(ctx context.Context, username, password string) (*NativeIdentity, *Error) {
+	if username == "" || password == "" {
+		return nil, errBadCredentials()
+	}
+	v, err := s.core.VerifyPassword(ctx, username, password)
+	if err != nil {
+		return nil, s.coreErr(err)
+	}
+	if v.TwoFactorRequired {
+		return nil, errSecondFactor()
+	}
+	acct, err := s.core.GetAccount(ctx, v.AccountID)
+	if err != nil {
+		return nil, s.coreErr(err)
+	}
+	link, e := s.resolveLink(ctx, acct, "")
+	if e != nil {
+		return nil, e
+	}
+	country := strings.ToLower(acct.Country)
+	if country == "" {
+		country = defaultCountry
+	}
+	s.log.Info("np native sign-in", "online_id", link.OnlineID)
+	return &NativeIdentity{AccountID: link.AccountID, LinkID: link.LinkID, OnlineID: link.OnlineID, Country: country, Credential: s.signer.Cred(link.LinkID, link.OnlineID)}, nil
+}

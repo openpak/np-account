@@ -1,0 +1,53 @@
+// Command np-account-lab runs the np-account routes against an in-process fake account core with
+// test accounts, for driving the PS3 firmware in the Pier lab without any real identity. Plain HTTP
+// on 127.0.0.1:8002 (or -addr); the lab's TLS terminator forwards to it. Never deploy this.
+package main
+
+import (
+	"flag"
+	"log"
+	"net"
+	"net/http"
+	"testing"
+	"time"
+
+	"openpak/np-account/internal/config"
+	"openpak/np-account/internal/coreclient"
+	"openpak/np-account/internal/fakecore"
+	"openpak/np-account/internal/oauth"
+	"openpak/np-account/internal/server"
+)
+
+// labTB is the minimum of testing.TB that fakecore.Serve uses.
+type labTB struct{ testing.TB }
+
+func (labTB) Helper()        {}
+func (labTB) Cleanup(func()) {}
+
+func main() {
+	addr := flag.String("addr", "127.0.0.1:8002", "listen address")
+	flag.Parse()
+	const key = "lab-core-key-lab-core-key-lab-core-key"
+	core := fakecore.New(key)
+	core.AddAccount(fakecore.Account{ID: "lab-1", Email: "lab1@example.org", Password: "lab-password-1", DisplayName: "Lab One", Country: "US"})
+	core.AddAccount(fakecore.Account{ID: "lab-2", Email: "lab2@example.org", Password: "lab-password-2", DisplayName: "Lab Two", Country: "GB"})
+	cli, err := coreclient.Dial("passthrough:///core", key, core.Serve(labTB{})...)
+	if err != nil {
+		log.Fatal(err)
+	}
+	cfg := &config.Config{ClientID: "lab", ClientSecret: "lab", TokenKey: "lab-token-key-lab-token-key-lab-token-key", EnvIssID: "1", CommDomain: "00",
+		RedirectPrefixes: []string{"orbis://"}, AccessTTL: time.Hour, AutoOnlineID: true}
+	ln, err := net.Listen("tcp", *addr)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println("np-account-lab on", *addr, "(accounts lab1@example.org / lab-password-1, lab2@example.org / lab-password-2)")
+	log.Fatal(server.New(*addr, logged(server.Handler(oauth.New(cfg, cli, nil, nil)))).Serve(ln))
+}
+
+func logged(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Println(r.Method, r.Host, r.URL.Path)
+		h.ServeHTTP(w, r)
+	})
+}

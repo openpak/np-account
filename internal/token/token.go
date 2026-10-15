@@ -66,6 +66,14 @@ func (s *Signer) mac(purpose, data string) string {
 	return base64.RawURLEncoding.EncodeToString(m.Sum(nil))
 }
 
+// Cred derives the 32-byte NP credential blob handed to the console at sign-in (the firmware stores it
+// opaquely and sends it back when it asks for tickets): HMAC-SHA256 over the link, stable for the link's life.
+func (s *Signer) Cred(linkID, onlineID string) []byte {
+	m := hmac.New(sha256.New, s.subkey("np-cred"))
+	m.Write([]byte(linkID + "\x00" + onlineID))
+	return m.Sum(nil)
+}
+
 // Issue signs c as a token of kind valid for ttl. Kind, expiry and a random
 // JTI are filled in.
 func (s *Signer) Issue(kind string, c Claims, ttl time.Duration) string {

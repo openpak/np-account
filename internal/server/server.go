@@ -5,9 +5,11 @@
 package server
 
 import (
+	"log/slog"
 	"net/http"
 	"time"
 
+	"openpak/np-account/internal/native"
 	"openpak/np-account/internal/nettest"
 	"openpak/np-account/internal/oauth"
 )
@@ -17,6 +19,7 @@ func Handler(svc *oauth.Service) http.Handler {
 	mux := http.NewServeMux()
 	svc.Register(mux)
 	nettest.Register(mux)
+	(&native.Handler{Auth: svc, Log: slog.Default()}).Register(mux)
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
 		w.Write([]byte("ok\n"))
