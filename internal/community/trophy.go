@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-// TrophyBackend is the private RPCN fork API. Firmware authentication stays here.
+// TrophyBackend is np-trophy's private API (openpak/np-trophy). Firmware authentication stays here.
 type TrophyBackend struct{ URL, Key string }
 type trophyGame struct {
 	CommunicationID string `json:"communication_id"`

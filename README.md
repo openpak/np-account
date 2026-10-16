@@ -8,7 +8,7 @@ the same split as [`nn-account`](../nn-account) for Wii U/3DS.
 
 Architecture: Pier firmware and real PS3s use the same native protocol endpoints.
 The central account core owns identity and relationships. No emulator-only game
-login/export/verifier is provided. RPCN is used only as private trophy storage
+login/export/verifier is provided. np-trophy (openpak/np-trophy) is the private trophy storage
 behind native trophy endpoints. Matching2 discovery reports maintenance until
 a native agent exists; this adapter does not yet provide native multiplayer.
 

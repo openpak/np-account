@@ -105,6 +105,10 @@ this correction still requires a retry.
 
 # RPCN trophy facade and native reads/sync (2026-10-15)
 
+> Superseded 2026-10-16: np-trophy (openpak/np-trophy, Go, Postgres) serves the same
+> contract; the openpak/rpcn fork and its local checkout were deleted. The facts below
+> are history.
+
 Backend base: RipleyTom/rpcn commit 253b3fe79baa35fad11f1ec9d9886837f02b89b4,
 AGPL-3.0. Fork https://github.com/openpak/rpcn, draft PR #1. RPCN storage and bulk
 merge are reused on the server only; no AGPL code is copied into GPL-2.0 Pier.
