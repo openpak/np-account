@@ -84,7 +84,9 @@ func (f *Front) Config() *tls.Config {
 			tls.TLS_RSA_WITH_RC4_128_SHA,
 		},
 		GetCertificate: func(hello *tls.ClientHelloInfo) (*tls.Certificate, error) {
-			name := strings.ToLower(strings.TrimSuffix(hello.ServerName, "."))
+			// Exactly as sent: the lab leaves kept the firmware's case
+			// (IV0001-NPXS01001-00.auth...), and its name check may not fold it.
+			name := strings.TrimSuffix(hello.ServerName, ".")
 			if name == "" {
 				name = f.Fallback
 			}

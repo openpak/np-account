@@ -47,6 +47,9 @@ func TestRSAKeyExchangeLeafPerSNI(t *testing.T) {
 		if got := c.ConnectionState().CipherSuite; got != tls.TLS_RSA_WITH_AES_128_CBC_SHA {
 			t.Fatalf("%s: suite %x", host, got)
 		}
+		if cn := c.ConnectionState().PeerCertificates[0].Subject.CommonName; cn != host {
+			t.Fatalf("leaf CN %q, want the SNI as sent %q", cn, host)
+		}
 		c.Close()
 	}
 	// The same front behind http.Server (what np-account runs) answers a request.

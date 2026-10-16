@@ -1,5 +1,9 @@
 # Changelog: np-account
 
+## v0.2.1 — 2026-10-16
+
+- PS3 TLS leaves keep the SNI exactly as the firmware sent it (mixed-case service IDs).
+
 ## v0.2.0 — 2026-10-16
 
 - Serves on OpenPak's primary server: Traefik passes the PS3 SNIs through to the new firmware TLS
