@@ -34,6 +34,7 @@ func Register(mux *http.ServeMux) {
 	mux.HandleFunc("POST /networktest/post", post)
 	mux.HandleFunc("POST /networktest/post_128", post)
 	mux.HandleFunc("GET /networktest/trial.txt", trial)
+	mux.HandleFunc("GET /update/ps3/list/{region}/ps3-updatelist.txt", updateList)
 }
 
 func get2m(w http.ResponseWriter, r *http.Request) {

@@ -42,13 +42,22 @@ type link struct {
 type Core struct {
 	accountv1.UnimplementedIdentityServer
 	accountv1.UnimplementedLinksServer
+	accountv1.UnimplementedSocialServer
+	accountv1.UnimplementedSessionsServer
+	accountv1.UnimplementedMediaServer
 
 	key string
 
-	mu       sync.Mutex
-	accounts map[string]*Account
-	links    map[string]*link
-	nextLink int
+	mu          sync.Mutex
+	accounts    map[string]*Account
+	links       map[string]*link
+	friends     map[[2]string]bool
+	pending     map[[2]string]bool
+	blocks      map[[2]string]bool
+	sessions    map[string]fakeSession
+	avatars     map[string][]byte
+	nextSession int
+	nextLink    int
 	// Down makes every call fail with Unavailable.
 	Down bool
 	// Calls records "Service.Method" per call, in order.
@@ -56,7 +65,7 @@ type Core struct {
 }
 
 func New(key string) *Core {
-	return &Core{key: key, accounts: map[string]*Account{}, links: map[string]*link{}}
+	return &Core{key: key, accounts: map[string]*Account{}, links: map[string]*link{}, friends: map[[2]string]bool{}, pending: map[[2]string]bool{}, blocks: map[[2]string]bool{}, sessions: map[string]fakeSession{}, avatars: map[string][]byte{}}
 }
 
 // AddAccount registers a. An empty Status means active.
@@ -124,6 +133,9 @@ func (c *Core) Serve(t testing.TB) []grpc.DialOption {
 	srv := grpc.NewServer()
 	accountv1.RegisterIdentityServer(srv, c)
 	accountv1.RegisterLinksServer(srv, c)
+	accountv1.RegisterSocialServer(srv, c)
+	accountv1.RegisterSessionsServer(srv, c)
+	accountv1.RegisterMediaServer(srv, c)
 	go srv.Serve(lis)
 	t.Cleanup(srv.Stop)
 	return []grpc.DialOption{grpc.WithContextDialer(func(context.Context, string) (net.Conn, error) { return lis.Dial() })}

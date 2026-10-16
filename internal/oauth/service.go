@@ -350,9 +350,9 @@ func (s *Service) NativeSignIn(ctx context.Context, username, password string) (
 	if err != nil {
 		return nil, s.coreErr(err)
 	}
-	link, e := s.resolveLink(ctx, acct, "")
-	if e != nil {
-		return nil, e
+	link, provisionErr := EnsureNPLink(ctx, s.core, acct)
+	if provisionErr != nil {
+		return nil, s.coreErr(provisionErr)
 	}
 	country := strings.ToLower(acct.Country)
 	if country == "" {

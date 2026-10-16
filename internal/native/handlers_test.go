@@ -3,6 +3,7 @@ package native_test
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -70,5 +71,121 @@ func TestBindAccount(t *testing.T) {
 	}
 	if b := post(h, "/native/reg/bindAccount.action", form("ban@example.org", "pw3")).Body.Bytes(); !bytes.Equal(b, []byte{0, 0x1b, 0, 0}) {
 		t.Fatalf("banned: % x", b)
+	}
+}
+
+func TestCAMAuthenticateUsesCoreIdentity(t *testing.T) {
+	h := handler(t)
+	for _, prefix := range []string{"cam", "reg"} {
+		path := "/native/" + prefix + "/authenticate.action"
+		form := url.Values{"version": {"25"}, "username": {"leia@example.org"}, "password": {"pw1"}}.Encode()
+		b := post(h, path, form).Body.Bytes()
+		if len(b) < 8+0x3c || binary.BigEndian.Uint16(b[4:]) != 0x5e || binary.BigEndian.Uint16(b[6:]) < 0x3c {
+			t.Fatalf("CAM identity missing for %s", prefix)
+		}
+		if got := strings.TrimRight(string(b[16:8+0x19]), "\x00"); got != "Leia_Organa" {
+			t.Fatalf("wrong core identity: %q", got)
+		}
+		bad := post(h, path, url.Values{"username": {"leia@example.org"}, "password": {"wrong"}}.Encode()).Body.Bytes()
+		if !bytes.Equal(bad, []byte{0, 0x14, 0, 0}) {
+			t.Fatalf("CAM accepted wrong password: %x", bad)
+		}
+		if got := post(h, "/native/"+prefix+"/delSess.action", "").Body.Bytes(); !bytes.Equal(got, []byte{0, 0, 0, 0}) {
+			t.Fatalf("delete session: %x", got)
+		}
+	}
+}
+
+// These bounds follow regcam FUN_000dd9ac, FUN_000d8f58 and FUN_000da04c,
+// rather than comparing the response against the encoder that produced it.
+func validateCAMLoader(b []byte) error {
+	find := func(data []byte, wanted uint16, minimum int) ([]byte, error) {
+		for len(data) >= 4 {
+			tag, n := binary.BigEndian.Uint16(data), int(binary.BigEndian.Uint16(data[2:]))
+			if n > len(data)-4 {
+				return nil, fmt.Errorf("truncated element %x", tag)
+			}
+			value := data[4 : 4+n]
+			if tag&0xfff == wanted {
+				if len(value) < minimum {
+					return nil, fmt.Errorf("short element %x", wanted)
+				}
+				return value, nil
+			}
+			data = data[4+n:]
+		}
+		return nil, fmt.Errorf("missing element %x", wanted)
+	}
+	if len(b) < 4 || b[1] != 0 {
+		return fmt.Errorf("failed reply")
+	}
+	identity, err := find(b[4:], 0x5e, 0x3c)
+	if err != nil {
+		return err
+	}
+	if _, err = find(identity[0x38:], 0x5d, 1); err != nil {
+		return err
+	}
+	if _, err = find(b[4:], 0x5f, 0x3c); err != nil {
+		return err
+	}
+	// A list is tag1, id+count; find the service list by id, then index0.
+	data := b[4:]
+	var services []byte
+	for len(data) >= 4 {
+		n := int(binary.BigEndian.Uint16(data[2:]))
+		if n > len(data)-4 {
+			return fmt.Errorf("truncated list")
+		}
+		if binary.BigEndian.Uint16(data)&0xfff == 1 && n >= 4 && binary.BigEndian.Uint16(data[4:]) == 0x16 {
+			services = data[4 : 4+n]
+			break
+		}
+		data = data[4+n:]
+	}
+	if len(services) < 4 || binary.BigEndian.Uint16(services[2:]) < 1 {
+		return fmt.Errorf("service index0 unavailable")
+	}
+	service, err := find(services[4:], 0x16, 0x2a)
+	if err != nil {
+		return err
+	}
+	nested := service[0x1e:]
+	options, err := find(nested, 1, 4)
+	if err != nil {
+		return err
+	}
+	if binary.BigEndian.Uint16(options) != 0x15 || binary.BigEndian.Uint16(options[2:]) != 0 {
+		return fmt.Errorf("expected empty payment option list")
+	}
+	for _, tag := range []uint16{0x7d, 0x7e} {
+		value, err := find(nested, tag, 0)
+		if err != nil {
+			return err
+		}
+		if len(value) != 0 {
+			return fmt.Errorf("unexpected billing value")
+		}
+	}
+	return nil
+}
+
+func TestCAMReplyPassesAccountLoaderBounds(t *testing.T) {
+	h := handler(t)
+	form := url.Values{"username": {"leia@example.org"}, "password": {"pw1"}}.Encode()
+	for _, prefix := range []string{"cam", "reg"} {
+		b := post(h, "/native/"+prefix+"/authenticate.action", form).Body.Bytes()
+		if err := validateCAMLoader(b); err != nil {
+			t.Fatalf("%s: %v", prefix, err)
+		}
+		for _, n := range []int{0, 3, 8, len(b) - 1} {
+			if validateCAMLoader(b[:n]) == nil {
+				t.Fatalf("accepted truncated reply length%d", n)
+			}
+		}
+	}
+	b := post(h, "/native/reg/bindAccount.action", form).Body.Bytes()
+	if validateCAMLoader(b) == nil {
+		t.Fatal("old bind-only reply must fail CAM settings/service requirements")
 	}
 }

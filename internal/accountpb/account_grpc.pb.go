@@ -19,6 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
+	Identity_ListAccounts_FullMethodName            = "/openpak.account.v1.Identity/ListAccounts"
 	Identity_VerifyPassword_FullMethodName          = "/openpak.account.v1.Identity/VerifyPassword"
 	Identity_VerifyPasswordByID_FullMethodName      = "/openpak.account.v1.Identity/VerifyPasswordByID"
 	Identity_SetAdapterCredential_FullMethodName    = "/openpak.account.v1.Identity/SetAdapterCredential"
@@ -35,6 +36,9 @@ const (
 // Internal identity contract: narrowly scoped verification and status.
 // Never exposes password hashes or recovery credentials.
 type IdentityClient interface {
+	// Home-only, minimal active-account directory for adapter identity backfills.
+	// Keyset cursor is an account ID, not an offset; no emails or credentials.
+	ListAccounts(ctx context.Context, in *ListAccountsRequest, opts ...grpc.CallOption) (*ListAccountsResponse, error)
 	// Verify an account's email+password. Returns a short-lived result bound to
 	// the caller's namespace and purpose; never an unrestricted session.
 	VerifyPassword(ctx context.Context, in *VerifyPasswordRequest, opts ...grpc.CallOption) (*VerifyPasswordResponse, error)
@@ -66,6 +70,16 @@ type identityClient struct {
 
 func NewIdentityClient(cc grpc.ClientConnInterface) IdentityClient {
 	return &identityClient{cc}
+}
+
+func (c *identityClient) ListAccounts(ctx context.Context, in *ListAccountsRequest, opts ...grpc.CallOption) (*ListAccountsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListAccountsResponse)
+	err := c.cc.Invoke(ctx, Identity_ListAccounts_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *identityClient) VerifyPassword(ctx context.Context, in *VerifyPasswordRequest, opts ...grpc.CallOption) (*VerifyPasswordResponse, error) {
@@ -145,6 +159,9 @@ func (c *identityClient) VerifySecondFactor(ctx context.Context, in *VerifySecon
 // Internal identity contract: narrowly scoped verification and status.
 // Never exposes password hashes or recovery credentials.
 type IdentityServer interface {
+	// Home-only, minimal active-account directory for adapter identity backfills.
+	// Keyset cursor is an account ID, not an offset; no emails or credentials.
+	ListAccounts(context.Context, *ListAccountsRequest) (*ListAccountsResponse, error)
 	// Verify an account's email+password. Returns a short-lived result bound to
 	// the caller's namespace and purpose; never an unrestricted session.
 	VerifyPassword(context.Context, *VerifyPasswordRequest) (*VerifyPasswordResponse, error)
@@ -178,6 +195,9 @@ type IdentityServer interface {
 // pointer dereference when methods are called.
 type UnimplementedIdentityServer struct{}
 
+func (UnimplementedIdentityServer) ListAccounts(context.Context, *ListAccountsRequest) (*ListAccountsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListAccounts not implemented")
+}
 func (UnimplementedIdentityServer) VerifyPassword(context.Context, *VerifyPasswordRequest) (*VerifyPasswordResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method VerifyPassword not implemented")
 }
@@ -218,6 +238,24 @@ func RegisterIdentityServer(s grpc.ServiceRegistrar, srv IdentityServer) {
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&Identity_ServiceDesc, srv)
+}
+
+func _Identity_ListAccounts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListAccountsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServer).ListAccounts(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Identity_ListAccounts_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServer).ListAccounts(ctx, req.(*ListAccountsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _Identity_VerifyPassword_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -353,6 +391,10 @@ var Identity_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "openpak.account.v1.Identity",
 	HandlerType: (*IdentityServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "ListAccounts",
+			Handler:    _Identity_ListAccounts_Handler,
+		},
 		{
 			MethodName: "VerifyPassword",
 			Handler:    _Identity_VerifyPassword_Handler,

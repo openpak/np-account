@@ -1771,6 +1771,170 @@ func (x *GetLinkBySubjectResponse) GetPublicCode() string {
 	return ""
 }
 
+type ListAccountsRequest struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	AfterAccountId string                 `protobuf:"bytes,1,opt,name=after_account_id,json=afterAccountId,proto3" json:"after_account_id,omitempty"`
+	Limit          int32                  `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"` // default 100, maximum 500
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *ListAccountsRequest) Reset() {
+	*x = ListAccountsRequest{}
+	mi := &file_openpak_account_v1_account_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListAccountsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListAccountsRequest) ProtoMessage() {}
+
+func (x *ListAccountsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_openpak_account_v1_account_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListAccountsRequest.ProtoReflect.Descriptor instead.
+func (*ListAccountsRequest) Descriptor() ([]byte, []int) {
+	return file_openpak_account_v1_account_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *ListAccountsRequest) GetAfterAccountId() string {
+	if x != nil {
+		return x.AfterAccountId
+	}
+	return ""
+}
+
+func (x *ListAccountsRequest) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+type AccountProjection struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	AccountId     string                 `protobuf:"bytes,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
+	DisplayName   string                 `protobuf:"bytes,2,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
+	Country       string                 `protobuf:"bytes,3,opt,name=country,proto3" json:"country,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AccountProjection) Reset() {
+	*x = AccountProjection{}
+	mi := &file_openpak_account_v1_account_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AccountProjection) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AccountProjection) ProtoMessage() {}
+
+func (x *AccountProjection) ProtoReflect() protoreflect.Message {
+	mi := &file_openpak_account_v1_account_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AccountProjection.ProtoReflect.Descriptor instead.
+func (*AccountProjection) Descriptor() ([]byte, []int) {
+	return file_openpak_account_v1_account_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *AccountProjection) GetAccountId() string {
+	if x != nil {
+		return x.AccountId
+	}
+	return ""
+}
+
+func (x *AccountProjection) GetDisplayName() string {
+	if x != nil {
+		return x.DisplayName
+	}
+	return ""
+}
+
+func (x *AccountProjection) GetCountry() string {
+	if x != nil {
+		return x.Country
+	}
+	return ""
+}
+
+type ListAccountsResponse struct {
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	Accounts           []*AccountProjection   `protobuf:"bytes,1,rep,name=accounts,proto3" json:"accounts,omitempty"`
+	NextAfterAccountId string                 `protobuf:"bytes,2,opt,name=next_after_account_id,json=nextAfterAccountId,proto3" json:"next_after_account_id,omitempty"` // empty at end
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *ListAccountsResponse) Reset() {
+	*x = ListAccountsResponse{}
+	mi := &file_openpak_account_v1_account_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListAccountsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListAccountsResponse) ProtoMessage() {}
+
+func (x *ListAccountsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_openpak_account_v1_account_proto_msgTypes[30]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListAccountsResponse.ProtoReflect.Descriptor instead.
+func (*ListAccountsResponse) Descriptor() ([]byte, []int) {
+	return file_openpak_account_v1_account_proto_rawDescGZIP(), []int{30}
+}
+
+func (x *ListAccountsResponse) GetAccounts() []*AccountProjection {
+	if x != nil {
+		return x.Accounts
+	}
+	return nil
+}
+
+func (x *ListAccountsResponse) GetNextAfterAccountId() string {
+	if x != nil {
+		return x.NextAfterAccountId
+	}
+	return ""
+}
+
 var File_openpak_account_v1_account_proto protoreflect.FileDescriptor
 
 const file_openpak_account_v1_account_proto_rawDesc = "" +
@@ -1900,7 +2064,18 @@ const file_openpak_account_v1_account_proto_rawDesc = "" +
 	"\n" +
 	"subject_id\x18\x04 \x01(\tR\tsubjectId\x12\x1f\n" +
 	"\vpublic_code\x18\x05 \x01(\tR\n" +
-	"publicCode*\xa6\x01\n" +
+	"publicCode\"U\n" +
+	"\x13ListAccountsRequest\x12(\n" +
+	"\x10after_account_id\x18\x01 \x01(\tR\x0eafterAccountId\x12\x14\n" +
+	"\x05limit\x18\x02 \x01(\x05R\x05limit\"o\n" +
+	"\x11AccountProjection\x12\x1d\n" +
+	"\n" +
+	"account_id\x18\x01 \x01(\tR\taccountId\x12!\n" +
+	"\fdisplay_name\x18\x02 \x01(\tR\vdisplayName\x12\x18\n" +
+	"\acountry\x18\x03 \x01(\tR\acountry\"\x8c\x01\n" +
+	"\x14ListAccountsResponse\x12A\n" +
+	"\baccounts\x18\x01 \x03(\v2%.openpak.account.v1.AccountProjectionR\baccounts\x121\n" +
+	"\x15next_after_account_id\x18\x02 \x01(\tR\x12nextAfterAccountId*\xa6\x01\n" +
 	"\rAccountStatus\x12\x1e\n" +
 	"\x1aACCOUNT_STATUS_UNSPECIFIED\x10\x00\x12\x19\n" +
 	"\x15ACCOUNT_STATUS_ACTIVE\x10\x01\x12\x19\n" +
@@ -1912,8 +2087,9 @@ const file_openpak_account_v1_account_proto_rawDesc = "" +
 	"\x12LINK_STATE_PENDING\x10\x01\x12\x15\n" +
 	"\x11LINK_STATE_ACTIVE\x10\x02\x12\x17\n" +
 	"\x13LINK_STATE_REVOKING\x10\x03\x12\x16\n" +
-	"\x12LINK_STATE_REVOKED\x10\x042\xb7\x06\n" +
-	"\bIdentity\x12g\n" +
+	"\x12LINK_STATE_REVOKED\x10\x042\x9a\a\n" +
+	"\bIdentity\x12a\n" +
+	"\fListAccounts\x12'.openpak.account.v1.ListAccountsRequest\x1a(.openpak.account.v1.ListAccountsResponse\x12g\n" +
 	"\x0eVerifyPassword\x12).openpak.account.v1.VerifyPasswordRequest\x1a*.openpak.account.v1.VerifyPasswordResponse\x12o\n" +
 	"\x12VerifyPasswordByID\x12-.openpak.account.v1.VerifyPasswordByIDRequest\x1a*.openpak.account.v1.VerifyPasswordResponse\x12y\n" +
 	"\x14SetAdapterCredential\x12/.openpak.account.v1.SetAdapterCredentialRequest\x1a0.openpak.account.v1.SetAdapterCredentialResponse\x12\x7f\n" +
@@ -1946,7 +2122,7 @@ func file_openpak_account_v1_account_proto_rawDescGZIP() []byte {
 }
 
 var file_openpak_account_v1_account_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_openpak_account_v1_account_proto_msgTypes = make([]protoimpl.MessageInfo, 28)
+var file_openpak_account_v1_account_proto_msgTypes = make([]protoimpl.MessageInfo, 31)
 var file_openpak_account_v1_account_proto_goTypes = []any{
 	(AccountStatus)(0),                      // 0: openpak.account.v1.AccountStatus
 	(LinkState)(0),                          // 1: openpak.account.v1.LinkState
@@ -1978,6 +2154,9 @@ var file_openpak_account_v1_account_proto_goTypes = []any{
 	(*GetLinkBySubjectRequest)(nil),         // 27: openpak.account.v1.GetLinkBySubjectRequest
 	(*GetActiveLinkByAccountRequest)(nil),   // 28: openpak.account.v1.GetActiveLinkByAccountRequest
 	(*GetLinkBySubjectResponse)(nil),        // 29: openpak.account.v1.GetLinkBySubjectResponse
+	(*ListAccountsRequest)(nil),             // 30: openpak.account.v1.ListAccountsRequest
+	(*AccountProjection)(nil),               // 31: openpak.account.v1.AccountProjection
+	(*ListAccountsResponse)(nil),            // 32: openpak.account.v1.ListAccountsResponse
 }
 var file_openpak_account_v1_account_proto_depIdxs = []int32{
 	0,  // 0: openpak.account.v1.VerifyPasswordResponse.status:type_name -> openpak.account.v1.AccountStatus
@@ -1988,41 +2167,44 @@ var file_openpak_account_v1_account_proto_depIdxs = []int32{
 	1,  // 5: openpak.account.v1.ActivateLinkResponse.state:type_name -> openpak.account.v1.LinkState
 	1,  // 6: openpak.account.v1.UnlinkLinkResponse.state:type_name -> openpak.account.v1.LinkState
 	1,  // 7: openpak.account.v1.GetLinkBySubjectResponse.state:type_name -> openpak.account.v1.LinkState
-	5,  // 8: openpak.account.v1.Identity.VerifyPassword:input_type -> openpak.account.v1.VerifyPasswordRequest
-	4,  // 9: openpak.account.v1.Identity.VerifyPasswordByID:input_type -> openpak.account.v1.VerifyPasswordByIDRequest
-	9,  // 10: openpak.account.v1.Identity.SetAdapterCredential:input_type -> openpak.account.v1.SetAdapterCredentialRequest
-	11, // 11: openpak.account.v1.Identity.RequestAccountDeletion:input_type -> openpak.account.v1.RequestAccountDeletionRequest
-	13, // 12: openpak.account.v1.Identity.VerifyAdapterCredential:input_type -> openpak.account.v1.VerifyAdapterCredentialRequest
-	7,  // 13: openpak.account.v1.Identity.GetAccount:input_type -> openpak.account.v1.GetAccountRequest
-	2,  // 14: openpak.account.v1.Identity.VerifySecondFactor:input_type -> openpak.account.v1.VerifySecondFactorRequest
-	21, // 15: openpak.account.v1.Links.ReserveLink:input_type -> openpak.account.v1.ReserveLinkRequest
-	23, // 16: openpak.account.v1.Links.ActivateLink:input_type -> openpak.account.v1.ActivateLinkRequest
-	25, // 17: openpak.account.v1.Links.UnlinkLink:input_type -> openpak.account.v1.UnlinkLinkRequest
-	27, // 18: openpak.account.v1.Links.GetLinkBySubject:input_type -> openpak.account.v1.GetLinkBySubjectRequest
-	28, // 19: openpak.account.v1.Links.GetActiveLinkByAccount:input_type -> openpak.account.v1.GetActiveLinkByAccountRequest
-	15, // 20: openpak.account.v1.Links.SetLinkPublicCode:input_type -> openpak.account.v1.SetLinkPublicCodeRequest
-	17, // 21: openpak.account.v1.Links.ListAccountLinks:input_type -> openpak.account.v1.ListAccountLinksRequest
-	20, // 22: openpak.account.v1.Links.GetLinkByPublicCode:input_type -> openpak.account.v1.GetLinkByPublicCodeRequest
-	6,  // 23: openpak.account.v1.Identity.VerifyPassword:output_type -> openpak.account.v1.VerifyPasswordResponse
-	6,  // 24: openpak.account.v1.Identity.VerifyPasswordByID:output_type -> openpak.account.v1.VerifyPasswordResponse
-	10, // 25: openpak.account.v1.Identity.SetAdapterCredential:output_type -> openpak.account.v1.SetAdapterCredentialResponse
-	12, // 26: openpak.account.v1.Identity.RequestAccountDeletion:output_type -> openpak.account.v1.RequestAccountDeletionResponse
-	14, // 27: openpak.account.v1.Identity.VerifyAdapterCredential:output_type -> openpak.account.v1.VerifyAdapterCredentialResponse
-	8,  // 28: openpak.account.v1.Identity.GetAccount:output_type -> openpak.account.v1.GetAccountResponse
-	3,  // 29: openpak.account.v1.Identity.VerifySecondFactor:output_type -> openpak.account.v1.VerifySecondFactorResponse
-	22, // 30: openpak.account.v1.Links.ReserveLink:output_type -> openpak.account.v1.ReserveLinkResponse
-	24, // 31: openpak.account.v1.Links.ActivateLink:output_type -> openpak.account.v1.ActivateLinkResponse
-	26, // 32: openpak.account.v1.Links.UnlinkLink:output_type -> openpak.account.v1.UnlinkLinkResponse
-	29, // 33: openpak.account.v1.Links.GetLinkBySubject:output_type -> openpak.account.v1.GetLinkBySubjectResponse
-	29, // 34: openpak.account.v1.Links.GetActiveLinkByAccount:output_type -> openpak.account.v1.GetLinkBySubjectResponse
-	16, // 35: openpak.account.v1.Links.SetLinkPublicCode:output_type -> openpak.account.v1.SetLinkPublicCodeResponse
-	19, // 36: openpak.account.v1.Links.ListAccountLinks:output_type -> openpak.account.v1.ListAccountLinksResponse
-	29, // 37: openpak.account.v1.Links.GetLinkByPublicCode:output_type -> openpak.account.v1.GetLinkBySubjectResponse
-	23, // [23:38] is the sub-list for method output_type
-	8,  // [8:23] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	31, // 8: openpak.account.v1.ListAccountsResponse.accounts:type_name -> openpak.account.v1.AccountProjection
+	30, // 9: openpak.account.v1.Identity.ListAccounts:input_type -> openpak.account.v1.ListAccountsRequest
+	5,  // 10: openpak.account.v1.Identity.VerifyPassword:input_type -> openpak.account.v1.VerifyPasswordRequest
+	4,  // 11: openpak.account.v1.Identity.VerifyPasswordByID:input_type -> openpak.account.v1.VerifyPasswordByIDRequest
+	9,  // 12: openpak.account.v1.Identity.SetAdapterCredential:input_type -> openpak.account.v1.SetAdapterCredentialRequest
+	11, // 13: openpak.account.v1.Identity.RequestAccountDeletion:input_type -> openpak.account.v1.RequestAccountDeletionRequest
+	13, // 14: openpak.account.v1.Identity.VerifyAdapterCredential:input_type -> openpak.account.v1.VerifyAdapterCredentialRequest
+	7,  // 15: openpak.account.v1.Identity.GetAccount:input_type -> openpak.account.v1.GetAccountRequest
+	2,  // 16: openpak.account.v1.Identity.VerifySecondFactor:input_type -> openpak.account.v1.VerifySecondFactorRequest
+	21, // 17: openpak.account.v1.Links.ReserveLink:input_type -> openpak.account.v1.ReserveLinkRequest
+	23, // 18: openpak.account.v1.Links.ActivateLink:input_type -> openpak.account.v1.ActivateLinkRequest
+	25, // 19: openpak.account.v1.Links.UnlinkLink:input_type -> openpak.account.v1.UnlinkLinkRequest
+	27, // 20: openpak.account.v1.Links.GetLinkBySubject:input_type -> openpak.account.v1.GetLinkBySubjectRequest
+	28, // 21: openpak.account.v1.Links.GetActiveLinkByAccount:input_type -> openpak.account.v1.GetActiveLinkByAccountRequest
+	15, // 22: openpak.account.v1.Links.SetLinkPublicCode:input_type -> openpak.account.v1.SetLinkPublicCodeRequest
+	17, // 23: openpak.account.v1.Links.ListAccountLinks:input_type -> openpak.account.v1.ListAccountLinksRequest
+	20, // 24: openpak.account.v1.Links.GetLinkByPublicCode:input_type -> openpak.account.v1.GetLinkByPublicCodeRequest
+	32, // 25: openpak.account.v1.Identity.ListAccounts:output_type -> openpak.account.v1.ListAccountsResponse
+	6,  // 26: openpak.account.v1.Identity.VerifyPassword:output_type -> openpak.account.v1.VerifyPasswordResponse
+	6,  // 27: openpak.account.v1.Identity.VerifyPasswordByID:output_type -> openpak.account.v1.VerifyPasswordResponse
+	10, // 28: openpak.account.v1.Identity.SetAdapterCredential:output_type -> openpak.account.v1.SetAdapterCredentialResponse
+	12, // 29: openpak.account.v1.Identity.RequestAccountDeletion:output_type -> openpak.account.v1.RequestAccountDeletionResponse
+	14, // 30: openpak.account.v1.Identity.VerifyAdapterCredential:output_type -> openpak.account.v1.VerifyAdapterCredentialResponse
+	8,  // 31: openpak.account.v1.Identity.GetAccount:output_type -> openpak.account.v1.GetAccountResponse
+	3,  // 32: openpak.account.v1.Identity.VerifySecondFactor:output_type -> openpak.account.v1.VerifySecondFactorResponse
+	22, // 33: openpak.account.v1.Links.ReserveLink:output_type -> openpak.account.v1.ReserveLinkResponse
+	24, // 34: openpak.account.v1.Links.ActivateLink:output_type -> openpak.account.v1.ActivateLinkResponse
+	26, // 35: openpak.account.v1.Links.UnlinkLink:output_type -> openpak.account.v1.UnlinkLinkResponse
+	29, // 36: openpak.account.v1.Links.GetLinkBySubject:output_type -> openpak.account.v1.GetLinkBySubjectResponse
+	29, // 37: openpak.account.v1.Links.GetActiveLinkByAccount:output_type -> openpak.account.v1.GetLinkBySubjectResponse
+	16, // 38: openpak.account.v1.Links.SetLinkPublicCode:output_type -> openpak.account.v1.SetLinkPublicCodeResponse
+	19, // 39: openpak.account.v1.Links.ListAccountLinks:output_type -> openpak.account.v1.ListAccountLinksResponse
+	29, // 40: openpak.account.v1.Links.GetLinkByPublicCode:output_type -> openpak.account.v1.GetLinkBySubjectResponse
+	25, // [25:41] is the sub-list for method output_type
+	9,  // [9:25] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_openpak_account_v1_account_proto_init() }
@@ -2036,7 +2218,7 @@ func file_openpak_account_v1_account_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_openpak_account_v1_account_proto_rawDesc), len(file_openpak_account_v1_account_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   28,
+			NumMessages:   31,
 			NumExtensions: 0,
 			NumServices:   2,
 		},

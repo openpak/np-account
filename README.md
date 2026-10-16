@@ -6,9 +6,21 @@ translates it into calls on the central [`account`](../account) core. It **owns 
 passwords, no accounts, no links. The core stays console-agnostic; everything Sony-shaped lives here,
 the same split as [`nn-account`](../nn-account) for Wii U/3DS.
 
-Status, 2026-10-15: the sign-in the XMB actually performs (`/native/reg/getCountries.action`, `/native/reg/bindAccount.action`, binary TLV
-replies) is served and unit-tested, and was captured from the firmware in the Pier lab. The OAuth and console-token routes below were **not requested**
-by that flow and remain UNCONFIRMED. `cmd/np-account-lab` runs everything against a fake core for the lab.
+Architecture: Pier firmware and real PS3s use the same native protocol endpoints.
+The central account core owns identity and relationships. No emulator-only game
+login/export/verifier is provided. RPCN is used only as private trophy storage
+behind native trophy endpoints. Matching2 discovery reports maintenance until
+a native agent exists; this adapter does not yet provide native multiplayer.
+
+Status, 2026-10-15: native binding, authenticated `/nav/auth`, self profile,
+core-backed friends and leased XMPP presence are implemented. Every active OpenPak
+account receives a PlayStation identity, including accounts that never sign in on
+PS3. Existing identities are preserved. Enable the captured community path with
+`NP_TICKET_KEY`; see [setup and migration](docs/ps3-community.md) and
+[wire provenance](docs/provenance.md). The earlier unsigned lab flow reached a
+signed-in XMB; the authenticated stream also connects in Pier. Populated-roster
+visual verification remains a separate check. OAuth endpoints remain unconfirmed
+for this firmware path. `cmd/np-account-lab` uses a fake core for isolated testing.
 
 Design: [`docs/ps3/np-account-design.md`](../docs/ps3/np-account-design.md). Wire facts (from firmware
 strings, not from a capture): [`docs/ps3/psn-signin-findings.md`](../docs/ps3/psn-signin-findings.md).
@@ -74,7 +86,7 @@ issued (else 401 `invalid_console_token`); absence is allowed unless `NP_REQUIRE
 
 ### Errors
 
-Every failure is JSON with `Cache-Control: no-store`:
+OAuth failures are JSON with `Cache-Control: no-store` (native, nav/auth and community routes use their firmware-specific reply formats):
 
 ```json
 {"error": "invalid_grant", "error_code": 1003, "error_description": "invalid username or password"}
@@ -129,9 +141,9 @@ The `error_code` numbers are assigned by OpenPak, not Sony's.
 
 Deliberately out of this cut:
 
-- NP **tickets** (signed by an owner-local key, never committed), and anything games read from `libsysutil_np`.
+- Sony-compatible ticket signatures and title-specific ticket semantics for games. The captured XMB path uses an owner-local Ed25519-authenticated extension.
 - The Silk account pages (register, password reset) on `account.<env>.ac.playstation.net`, commerce and store hosts.
-- Presence, friends and invitations (`Sessions`, `Social`, `Invitations` in the core).
+- Invitations and private/offline messages. Friends use core `Social`; presence uses leased core `Sessions`.
 - Following core `Events` (revocation is only checked at sign-in and at grant/authorize time).
 - Rate limiting of password attempts on this side (the core limits second-factor attempts; password limits are
   the core's business).
@@ -140,8 +152,7 @@ Deliberately out of this cut:
 
 ## UNCONFIRMED
 
-Everything the firmware sees. The facts in the findings document are strings from the decrypted firmware
-modules; nothing was captured on the wire. In particular:
+The OAuth surface below remains unconfirmed. The native, nav/auth, profile and XMPP flows were captured; see docs/provenance.md. In particular:
 
 - That the password grant returns `X-NP-GRANT-CODE`, the `npsso_token` cookie and `id_token` together, and which
   reply the firmware reads each from; that `authorize` is called afterwards with the cookie.

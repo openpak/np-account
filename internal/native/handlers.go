@@ -2,11 +2,13 @@ package native
 
 import (
 	"context"
-	"crypto/sha256"
+	"encoding/binary"
 	"log/slog"
 	"net/http"
+	"strings"
 
 	"openpak/np-account/internal/oauth"
+	"openpak/np-account/internal/onlineid"
 )
 
 const maxFormBytes = 64 << 10
@@ -35,6 +37,14 @@ type Handler struct {
 func (h *Handler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("POST /native/reg/getCountries.action", h.getCountries)
 	mux.HandleFunc("POST /native/reg/bindAccount.action", h.bindAccount)
+	// Authenticate also needs the CAM settings/service projection after identity.
+	// The bindAccount-only reply is insufficient for the account-management UI.
+	mux.HandleFunc("POST /native/cam/authenticate.action", h.bindAccount)
+	mux.HandleFunc("POST /native/reg/authenticate.action", h.bindAccount)
+	// No separate CAM server session exists yet. Deletion is idempotent and must
+	// not terminate the user's independently authenticated NP/XMPP session.
+	mux.HandleFunc("POST /native/cam/delSess.action", func(w http.ResponseWriter, r *http.Request) { h.reply(w, Reply()) })
+	mux.HandleFunc("POST /native/reg/delSess.action", func(w http.ResponseWriter, r *http.Request) { h.reply(w, Reply()) })
 	mux.HandleFunc("POST /native/", h.unknown)
 }
 
@@ -79,18 +89,38 @@ func (h *Handler) bindAccount(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+	if strings.HasSuffix(r.URL.Path, "/authenticate.action") {
+		h.reply(w, CAMReply(id))
+		return
+	}
 	h.reply(w, BindReply(id))
 }
 
 // BindReply is the bindAccount success reply: one element 0x5e holding the account struct followed
 // by element 0x5d, the NP credential blob (layout in docs/ps3/psn-signin-findings.md).
 func BindReply(id *oauth.NativeIdentity) []byte {
-	sum := sha256.Sum256([]byte("openpak-np-native-account-id-v1\x00" + id.AccountID))
+
 	v := make([]byte, 0x38)
-	copy(v[0:8], sum[:8])
+	binary.BigEndian.PutUint64(v[0:8], onlineid.AccountID(id.AccountID))
 	copy(v[0x08:0x19], id.OnlineID) // 17 bytes, NUL padded
 	copy(v[0x19:0x1c], id.Country)
 	copy(v[0x1c:0x22], "en")
 	v = append(v, Elem(0x5d, id.Credential)...)
 	return Reply(Elem(0x5e, v))
+}
+
+// CAMReply adds the settings and service records required by regcam's account
+// management loader (FUN_0006b1e0). OpenPak has no billing/payment backend here:
+// settings are the default zero projection and service fields are absent/empty.
+// Never populate this record with invented Sony wallet or billing information.
+func CAMReply(id *oauth.NativeIdentity) []byte {
+	reply := BindReply(id)
+	reply = append(reply, Elem(0x5f, make([]byte, 0x3c))...)
+	// Service entry: 0x1e fixed bytes, required empty list0x15 and strings7d/7e.
+	// FUN_000da04c requires one entry at index0 even with no payment options.
+	service := make([]byte, 0x1e)
+	service = append(service, List(0x15)...)
+	service = append(service, Elem(0x7d, nil)...)
+	service = append(service, Elem(0x7e, nil)...)
+	return append(reply, List(0x16, Elem(0x16, service))...)
 }

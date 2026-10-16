@@ -3,9 +3,15 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"log/slog"
+	"net"
 	"net/http"
+	"openpak/np-account/internal/community"
+	"openpak/np-account/internal/ticket"
+	"openpak/np-account/internal/tlsfront"
+	"openpak/np-account/internal/xmpp"
 	"os"
 	"os/signal"
 	"syscall"
@@ -32,10 +38,74 @@ func main() {
 	defer core.Close()
 
 	svc := oauth.New(cfg, core, nil, log)
-	srv := server.New(cfg.HTTPListenAddr, server.Handler(svc))
+	var comm *community.Service
+	if cfg.TicketKeyPath != "" {
+		signer, e := ticket.Load(cfg.TicketKeyPath)
+		if e != nil {
+			log.Error("ticket key", "err", e)
+			os.Exit(2)
+		}
+		comm = &community.Service{Auth: svc, Core: core, Tickets: signer, TTL: cfg.AccessTTL, Client: cfg.SessionClient, OS: cfg.SessionOS}
+
+		if path := os.Getenv("NP_TROPHY_RESOURCE_KEY"); path != "" {
+			key, e := os.ReadFile(path)
+			if e != nil || len(key) != 20 {
+				log.Error("invalid trophy resource key file")
+				os.Exit(2)
+			}
+			comm.TrophyResourceKey = key
+		}
+		if endpoint := os.Getenv("NP_TROPHY_BACKEND"); endpoint != "" {
+			comm.Trophies = &community.TrophyBackend{URL: endpoint, Key: os.Getenv("NP_TROPHY_BACKEND_KEY")}
+		}
+	}
+	handler := server.Handler(svc, comm)
+	srv := server.New(cfg.HTTPListenAddr, handler)
+
+	// The firmware's own TLS (RSA key exchange, leaf per SNI from the PS3 CA),
+	// enabled with NP_TLS_ADDR. Traefik passes the PS3 SNIs through to it.
+	var front *tlsfront.Front
+	if addr := os.Getenv("NP_TLS_ADDR"); addr != "" {
+		front, err = tlsfront.Load(os.Getenv("NP_TLS_CA_CERT"), os.Getenv("NP_TLS_CA_KEY"))
+		if err != nil {
+			log.Error("PS3 TLS CA", "err", err)
+			os.Exit(2)
+		}
+		tsrv := front.Serve(server.New(addr, handler))
+		go func() {
+			if e := tsrv.ListenAndServeTLS("", ""); e != nil && !errors.Is(e, http.ErrServerClosed) {
+				log.Error("PS3 TLS serve", "err", e)
+				os.Exit(1)
+			}
+		}()
+		log.Info("PS3 TLS listening", "addr", addr)
+	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+	if comm != nil {
+		ln, e := net.Listen("tcp", cfg.XMPPListenAddr)
+		if e != nil {
+			log.Error("XMPP listen", "err", e)
+			os.Exit(1)
+		}
+		// NP_XMPP_TLS=1 serves XMPP behind the same PS3 TLS instead of a separate terminator.
+		if front != nil && os.Getenv("NP_XMPP_TLS") == "1" {
+			cfgTLS := front.Config()
+			front.Fallback = "us.us.np.communication.playstation.net"
+			ln = tls.NewListener(ln, cfgTLS)
+		}
+		go func() {
+			if e := (&xmpp.Server{Service: comm, Log: log}).Serve(ctx, ln); e != nil {
+				log.Error("XMPP serve", "err", e)
+				stop()
+			}
+		}()
+		if cfg.ProvisionAccounts {
+			go comm.Reconcile(ctx, core, log)
+		}
+		log.Info("NP community enabled", "xmpp_addr", cfg.XMPPListenAddr)
+	}
 	go func() {
 		<-ctx.Done()
 		sctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

@@ -16,6 +16,12 @@ var ErrMissingConfig = errors.New("missing required configuration")
 const MinKeyLen = 32
 
 type Config struct {
+	TicketKeyPath     string // owner-local Ed25519 PKCS8 PEM; enables ticket/profile/XMPP surface
+	XMPPListenAddr    string // plaintext loopback behind RSA-kex TLS terminator
+	SessionClient     string
+	SessionOS         string
+	ProvisionAccounts bool
+
 	HTTPListenAddr string // NP_HTTP_ADDR, default :8002
 
 	CoreAddress string // NP_CORE_ADDR, default localhost:7000
@@ -47,6 +53,11 @@ type Config struct {
 // Load reads the environment through getenv (os.Getenv in production).
 func Load(getenv func(string) string) (*Config, error) {
 	c := &Config{
+		TicketKeyPath:       getenv("NP_TICKET_KEY"),
+		XMPPListenAddr:      orDefault(getenv("NP_XMPP_ADDR"), "127.0.0.1:8523"),
+		SessionClient:       orDefault(getenv("NP_SESSION_CLIENT"), "ps3"),
+		SessionOS:           getenv("NP_SESSION_OS"),
+		ProvisionAccounts:   getenv("NP_PROVISION_ACCOUNTS") != "false",
 		HTTPListenAddr:      orDefault(getenv("NP_HTTP_ADDR"), ":8002"),
 		CoreAddress:         orDefault(getenv("NP_CORE_ADDR"), "localhost:7000"),
 		CoreKey:             getenv("NP_CORE_KEY"),

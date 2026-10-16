@@ -1,0 +1,46 @@
+name: release
+
+# Tag a release (v1.2.3) and this publishes ghcr.io/openpak/<repo>:1.2.3, :1.2 and :latest for
+# amd64 and arm64. Deployed hosts run podman-auto-update against :latest, so pushing a tag is
+# the deploy. Runs on the OpenPak self-hosted runner (podman + qemu binfmt), so it costs no
+# GitHub-hosted minutes; this repository is private and those are metered.
+on:
+  push:
+    tags: ['v*.*.*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  image:
+    runs-on: [self-hosted, linux, podman]
+    steps:
+      - uses: actions/checkout@v5
+      - name: Scratch in the runner's temp, not the machine's shared /tmp
+        # /tmp is a RAM disk every build on the machine shares; when it filled on
+        # 2026-09-24 a compiler died and a job hung for hours instead of failing.
+        run: |
+          mkdir -p "$RUNNER_TEMP/scratch"
+          echo "TMPDIR=$RUNNER_TEMP/scratch" >> "$GITHUB_ENV"
+      # Job-scoped login, never the runner user's own. The runner context is not
+      # available in job-level env, so each step that touches the registry sets it.
+      - env:
+          REGISTRY_AUTH_FILE: ${{ runner.temp }}/auth.json
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u "${{ github.actor }}" --password-stdin
+      - env:
+          REGISTRY_AUTH_FILE: ${{ runner.temp }}/auth.json
+        run: |
+          set -e
+          IMG="ghcr.io/${{ github.repository }}"
+          case "${GITHUB_REF_NAME}" in v*) VER="${GITHUB_REF_NAME#v}";; *) VER="";; esac
+          podman manifest rm "$IMG:build" 2>/dev/null || true
+          podman build --platform linux/amd64,linux/arm64 --manifest "$IMG:build" .
+          TAGS="latest"; [ -n "$VER" ] && TAGS="$TAGS $VER $(echo "$VER" | cut -d. -f1,2)"
+          for t in $TAGS; do podman manifest push --all "$IMG:build" "docker://$IMG:$t"; done
+          podman manifest rm "$IMG:build"
+          echo "pushed $IMG: $TAGS"
+      - name: Clear scratch
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/scratch"

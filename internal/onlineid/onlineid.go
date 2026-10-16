@@ -74,3 +74,9 @@ func UserID(linkID string) string {
 	sum := sha256.Sum256([]byte("openpak-np-user-id-v1\x00" + linkID))
 	return strconv.FormatUint(binary.BigEndian.Uint64(sum[:8])&^(1<<63), 10)
 }
+
+// AccountID is the native NP account number. Keep ticket and bindAccount IDs identical.
+func AccountID(accountID string) uint64 {
+	sum := sha256.Sum256([]byte("openpak-np-native-account-id-v1\x00" + accountID))
+	return binary.BigEndian.Uint64(sum[:8])
+}

@@ -7,6 +7,9 @@ option go_package = "openpak/account/proto/openpak/account/v1;accountv1";
 // Internal identity contract: narrowly scoped verification and status.
 // Never exposes password hashes or recovery credentials.
 service Identity {
+  // Home-only, minimal active-account directory for adapter identity backfills.
+  // Keyset cursor is an account ID, not an offset; no emails or credentials.
+  rpc ListAccounts(ListAccountsRequest) returns (ListAccountsResponse);
   // Verify an account's email+password. Returns a short-lived result bound to
   // the caller's namespace and purpose; never an unrestricted session.
   rpc VerifyPassword(VerifyPasswordRequest) returns (VerifyPasswordResponse);
@@ -250,4 +253,18 @@ enum LinkState {
   LINK_STATE_ACTIVE = 2;
   LINK_STATE_REVOKING = 3;
   LINK_STATE_REVOKED = 4;
+}
+
+message ListAccountsRequest {
+ string after_account_id = 1;
+ int32 limit = 2; // default 100, maximum 500
+}
+message AccountProjection {
+ string account_id = 1;
+ string display_name = 2;
+ string country = 3;
+}
+message ListAccountsResponse {
+ repeated AccountProjection accounts = 1;
+ string next_after_account_id = 2; // empty at end
 }
