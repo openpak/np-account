@@ -14,7 +14,7 @@ func (c *Client) AccountPage(ctx context.Context, after string) ([]*Account, str
 	}
 	out := make([]*Account, 0, len(r.Accounts))
 	for _, a := range r.Accounts {
-		out = append(out, &Account{ID: a.AccountId, DisplayName: a.DisplayName, Country: a.Country})
+		out = append(out, &Account{ID: a.AccountId, DisplayName: a.DisplayName, Handle: a.Handle, Country: a.Country})
 	}
 	return out, r.NextAfterAccountId, nil
 }

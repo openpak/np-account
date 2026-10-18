@@ -19,6 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
+	Identity_FinalizeAccountDeletion_FullMethodName = "/openpak.account.v1.Identity/FinalizeAccountDeletion"
+	Identity_CheckHandle_FullMethodName             = "/openpak.account.v1.Identity/CheckHandle"
+	Identity_ResolveHandle_FullMethodName           = "/openpak.account.v1.Identity/ResolveHandle"
+	Identity_ClaimHandle_FullMethodName             = "/openpak.account.v1.Identity/ClaimHandle"
 	Identity_ListAccounts_FullMethodName            = "/openpak.account.v1.Identity/ListAccounts"
 	Identity_VerifyPassword_FullMethodName          = "/openpak.account.v1.Identity/VerifyPassword"
 	Identity_VerifyPasswordByID_FullMethodName      = "/openpak.account.v1.Identity/VerifyPasswordByID"
@@ -36,6 +40,12 @@ const (
 // Internal identity contract: narrowly scoped verification and status.
 // Never exposes password hashes or recovery credentials.
 type IdentityClient interface {
+	// Home-only operator action, after a deletion request. Not a user rename.
+	FinalizeAccountDeletion(ctx context.Context, in *RequestAccountDeletionRequest, opts ...grpc.CallOption) (*RequestAccountDeletionResponse, error)
+	CheckHandle(ctx context.Context, in *CheckHandleRequest, opts ...grpc.CallOption) (*CheckHandleResponse, error)
+	ResolveHandle(ctx context.Context, in *ResolveHandleRequest, opts ...grpc.CallOption) (*ResolveHandleResponse, error)
+	// Home-only legacy migration: one assignment, no rename path.
+	ClaimHandle(ctx context.Context, in *ClaimHandleRequest, opts ...grpc.CallOption) (*ClaimHandleResponse, error)
 	// Home-only, minimal active-account directory for adapter identity backfills.
 	// Keyset cursor is an account ID, not an offset; no emails or credentials.
 	ListAccounts(ctx context.Context, in *ListAccountsRequest, opts ...grpc.CallOption) (*ListAccountsResponse, error)
@@ -70,6 +80,46 @@ type identityClient struct {
 
 func NewIdentityClient(cc grpc.ClientConnInterface) IdentityClient {
 	return &identityClient{cc}
+}
+
+func (c *identityClient) FinalizeAccountDeletion(ctx context.Context, in *RequestAccountDeletionRequest, opts ...grpc.CallOption) (*RequestAccountDeletionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RequestAccountDeletionResponse)
+	err := c.cc.Invoke(ctx, Identity_FinalizeAccountDeletion_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityClient) CheckHandle(ctx context.Context, in *CheckHandleRequest, opts ...grpc.CallOption) (*CheckHandleResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CheckHandleResponse)
+	err := c.cc.Invoke(ctx, Identity_CheckHandle_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityClient) ResolveHandle(ctx context.Context, in *ResolveHandleRequest, opts ...grpc.CallOption) (*ResolveHandleResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ResolveHandleResponse)
+	err := c.cc.Invoke(ctx, Identity_ResolveHandle_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *identityClient) ClaimHandle(ctx context.Context, in *ClaimHandleRequest, opts ...grpc.CallOption) (*ClaimHandleResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ClaimHandleResponse)
+	err := c.cc.Invoke(ctx, Identity_ClaimHandle_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *identityClient) ListAccounts(ctx context.Context, in *ListAccountsRequest, opts ...grpc.CallOption) (*ListAccountsResponse, error) {
@@ -159,6 +209,12 @@ func (c *identityClient) VerifySecondFactor(ctx context.Context, in *VerifySecon
 // Internal identity contract: narrowly scoped verification and status.
 // Never exposes password hashes or recovery credentials.
 type IdentityServer interface {
+	// Home-only operator action, after a deletion request. Not a user rename.
+	FinalizeAccountDeletion(context.Context, *RequestAccountDeletionRequest) (*RequestAccountDeletionResponse, error)
+	CheckHandle(context.Context, *CheckHandleRequest) (*CheckHandleResponse, error)
+	ResolveHandle(context.Context, *ResolveHandleRequest) (*ResolveHandleResponse, error)
+	// Home-only legacy migration: one assignment, no rename path.
+	ClaimHandle(context.Context, *ClaimHandleRequest) (*ClaimHandleResponse, error)
 	// Home-only, minimal active-account directory for adapter identity backfills.
 	// Keyset cursor is an account ID, not an offset; no emails or credentials.
 	ListAccounts(context.Context, *ListAccountsRequest) (*ListAccountsResponse, error)
@@ -195,6 +251,18 @@ type IdentityServer interface {
 // pointer dereference when methods are called.
 type UnimplementedIdentityServer struct{}
 
+func (UnimplementedIdentityServer) FinalizeAccountDeletion(context.Context, *RequestAccountDeletionRequest) (*RequestAccountDeletionResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method FinalizeAccountDeletion not implemented")
+}
+func (UnimplementedIdentityServer) CheckHandle(context.Context, *CheckHandleRequest) (*CheckHandleResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CheckHandle not implemented")
+}
+func (UnimplementedIdentityServer) ResolveHandle(context.Context, *ResolveHandleRequest) (*ResolveHandleResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ResolveHandle not implemented")
+}
+func (UnimplementedIdentityServer) ClaimHandle(context.Context, *ClaimHandleRequest) (*ClaimHandleResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ClaimHandle not implemented")
+}
 func (UnimplementedIdentityServer) ListAccounts(context.Context, *ListAccountsRequest) (*ListAccountsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListAccounts not implemented")
 }
@@ -238,6 +306,78 @@ func RegisterIdentityServer(s grpc.ServiceRegistrar, srv IdentityServer) {
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&Identity_ServiceDesc, srv)
+}
+
+func _Identity_FinalizeAccountDeletion_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RequestAccountDeletionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServer).FinalizeAccountDeletion(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Identity_FinalizeAccountDeletion_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServer).FinalizeAccountDeletion(ctx, req.(*RequestAccountDeletionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Identity_CheckHandle_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CheckHandleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServer).CheckHandle(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Identity_CheckHandle_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServer).CheckHandle(ctx, req.(*CheckHandleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Identity_ResolveHandle_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ResolveHandleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServer).ResolveHandle(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Identity_ResolveHandle_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServer).ResolveHandle(ctx, req.(*ResolveHandleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Identity_ClaimHandle_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ClaimHandleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IdentityServer).ClaimHandle(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Identity_ClaimHandle_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IdentityServer).ClaimHandle(ctx, req.(*ClaimHandleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _Identity_ListAccounts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -391,6 +531,22 @@ var Identity_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "openpak.account.v1.Identity",
 	HandlerType: (*IdentityServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "FinalizeAccountDeletion",
+			Handler:    _Identity_FinalizeAccountDeletion_Handler,
+		},
+		{
+			MethodName: "CheckHandle",
+			Handler:    _Identity_CheckHandle_Handler,
+		},
+		{
+			MethodName: "ResolveHandle",
+			Handler:    _Identity_ResolveHandle_Handler,
+		},
+		{
+			MethodName: "ClaimHandle",
+			Handler:    _Identity_ClaimHandle_Handler,
+		},
 		{
 			MethodName: "ListAccounts",
 			Handler:    _Identity_ListAccounts_Handler,

@@ -172,7 +172,13 @@ func (s *Service) resolveLink(ctx context.Context, acct *coreclient.Account, wan
 	if !errors.Is(err, coreclient.ErrNoLink) {
 		return nil, s.coreErr(err)
 	}
+	if acct.Handle != "" && wanted != "" && wanted != acct.Handle {
+		return nil, errInvalidOnlineID()
+	}
 	id := wanted
+	if acct.Handle != "" {
+		id = acct.Handle
+	}
 	switch {
 	case id != "":
 		if !onlineid.Valid(id) {

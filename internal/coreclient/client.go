@@ -52,6 +52,7 @@ type Verified struct {
 type Account struct {
 	ID          string
 	DisplayName string
+	Handle      string
 	Country     string
 }
 
@@ -156,7 +157,7 @@ func (c *Client) GetAccount(ctx context.Context, accountID string) (*Account, er
 	if resp.Status != accountv1.AccountStatus_ACCOUNT_STATUS_ACTIVE {
 		return nil, ErrAccountDisabled
 	}
-	return &Account{ID: resp.AccountId, DisplayName: resp.DisplayName, Country: resp.Country}, nil
+	return &Account{ID: resp.AccountId, DisplayName: resp.DisplayName, Handle: resp.Handle, Country: resp.Country}, nil
 }
 
 // GetLinkByAccount returns the account's active np link, or ErrNoLink.

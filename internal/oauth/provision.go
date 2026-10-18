@@ -38,6 +38,9 @@ func EnsureNPLink(ctx context.Context, core ProvisionCore, acct *coreclient.Acco
 		base = base[:7]
 	}
 	candidates = append(candidates, base+"_"+suffix[:8], "OP"+suffix[:14])
+	if acct.Handle != "" {
+		candidates = []string{acct.Handle}
+	}
 	for _, candidate := range candidates {
 		link, e = core.ClaimOnlineID(ctx, acct.ID, candidate)
 		if e == nil {

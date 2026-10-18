@@ -7,9 +7,24 @@ option go_package = "openpak/account/proto/openpak/account/v1;accountv1";
 // Console adapters delegate account creation to the core (PRD FR-1).
 service Registration {
   rpc RegisterAccount(RegisterAccountRequest) returns (RegisterAccountResponse);
+  // A person changed their name on a console. The display name is an account
+  // fact, shown on the website and to friends on every console, so the
+  // adapter hands it to the core rather than keeping its own copy. Same
+  // 1-32 character rule as registration. NotFound for an account that is not
+  // active; InvalidArgument for a name that breaks the rule.
+  rpc SetDisplayName(SetDisplayNameRequest) returns (SetDisplayNameResponse);
 }
 
+message SetDisplayNameRequest {
+  string caller_namespace = 1; // adapter namespace
+  string account_id = 2;
+  string display_name = 3;
+}
+
+message SetDisplayNameResponse {}
+
 message RegisterAccountRequest {
+  string handle = 8; // Required, immutable public identifier.
   string caller_namespace = 1; // adapter namespace
   string purpose = 2;          // e.g. "console_registration"
   string email = 3;
