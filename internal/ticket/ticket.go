@@ -92,11 +92,15 @@ func elem(tag uint16, value []byte) []byte {
 // Japanese), so OpenPak uses the same English default as the native bindAccount reply.
 const languageEnglishUS = 1
 
-// birthFields derives what vsh FUN_001bb88c reads from the ticket's status word (table 0x684558
-// index 9) and date (index 10): age in the low 7 bits of byte 0, bit 7 of byte 3 marking that a
-// date of birth follows. Both stay zero when the core holds no valid birthday.
-func birthFields(birthday string, now time.Time) (status []byte, dob []byte) {
-	status, dob = make([]byte, 4), make([]byte, 8)
+// birthFields derives the two ticket values built from the core's birthday. Table 0x684558 index
+// 0xb (tag 0x3011, 4 bytes) is the date of birth as year u16, month, day: vsh FUN_001bbc10 passes
+// it as the last-but-one stack argument of FUN_001bb88c and writes year<<16|month<<8|day to
+// xRegistry /setting/user/N/npguest/birth (id 0x84), which regcam's country/language/date-of-birth
+// form (FUN_00067724) reads; zero makes What's New / Account Information ask for it. Index 9 (the
+// status word) carries the age in the low 7 bits of byte 0 (FUN_001bb88c stores it as ctx+0x274).
+// Both stay zero when the core holds no valid birthday.
+func birthFields(birthday string, now time.Time) (dob []byte, status []byte) {
+	dob, status = make([]byte, 4), make([]byte, 4)
 	b, err := time.Parse("2006-01-02", birthday)
 	if err != nil || b.After(now) {
 		return
@@ -108,10 +112,9 @@ func birthFields(birthday string, now time.Time) (status []byte, dob []byte) {
 	if age > 0x7f {
 		age = 0x7f
 	}
-	status[0], status[3] = byte(age), 0x80
-	if ms := b.UnixMilli(); ms >= 0 {
-		binary.BigEndian.PutUint64(dob, uint64(ms))
-	}
+	status[0] = byte(age)
+	binary.BigEndian.PutUint16(dob, uint16(b.Year()))
+	dob[2], dob[3] = byte(b.Month()), byte(b.Day())
 	return
 }
 func fixed(s string, n int) []byte { b := make([]byte, n); copy(b, s); return b }
@@ -128,8 +131,8 @@ func (s *Signer) Issue(id Identity, ttl time.Duration) ([]byte, error) {
 	}
 	region := fixed(id.Country, 4)
 	region[3] = languageEnglishUS
-	status, dob := birthFields(id.Birthday, s.now())
-	values := [][]byte{nonce, make([]byte, 4), u64(uint64(id.Issued)), u64(uint64(id.Expires)), u64(onlineid.AccountID(id.AccountID)), fixed(id.OnlineID, 32), region, fixed("un", 4), fixed(id.Service, 24), make([]byte, 4), status, dob}
+	dob, status := birthFields(id.Birthday, s.now())
+	values := [][]byte{nonce, make([]byte, 4), u64(uint64(id.Issued)), u64(uint64(id.Expires)), u64(onlineid.AccountID(id.AccountID)), fixed(id.OnlineID, 32), region, fixed("un", 4), fixed(id.Service, 24), dob, status, make([]byte, 8)}
 	tags := []uint16{8, 1, 7, 7, 2, 4, 8, 4, 8, 0x3011, 1, 7}
 	var body []byte
 	for i, v := range values {

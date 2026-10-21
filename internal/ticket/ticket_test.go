@@ -99,16 +99,16 @@ func TestAvatarCapabilityBoundsAndExpiry(t *testing.T) {
 
 func TestBirthFields(t *testing.T) {
 	now := time.Date(2026, 10, 21, 12, 0, 0, 0, time.UTC)
-	st, dob := birthFields("1990-01-01", now)
-	if st[0] != 36 || st[3] != 0x80 || binary.BigEndian.Uint64(dob) != 631152000000 {
-		t.Fatalf("status %x dob %x", st, dob)
+	dob, st := birthFields("1990-01-01", now)
+	if string(dob) != "\x07\xc6\x01\x01" || st[0] != 36 || st[1]|st[2]|st[3] != 0 {
+		t.Fatalf("dob %x status %x", dob, st)
 	}
-	if st, _ := birthFields("1990-12-31", now); st[0] != 35 {
+	if _, st := birthFields("1990-12-31", now); st[0] != 35 {
 		t.Fatalf("age before birthday: %d", st[0])
 	}
 	for _, bad := range []string{"", "x", "2030-01-01"} {
-		if st, dob := birthFields(bad, now); binary.BigEndian.Uint32(st) != 0 || binary.BigEndian.Uint64(dob) != 0 {
-			t.Fatalf("%q must leave status and date zero", bad)
+		if dob, st := birthFields(bad, now); binary.BigEndian.Uint32(dob) != 0 || binary.BigEndian.Uint32(st) != 0 {
+			t.Fatalf("%q must leave both zero", bad)
 		}
 	}
 }
