@@ -471,6 +471,7 @@ func (c *client) refresh(ctx context.Context) error {
 			if e = c.send(`<presence from=` + attr(f.JID()+"/ps3") + ` to=` + attr(c.jid) + kind + `>` + body + `</presence>`); e != nil {
 				return e
 			}
+			c.s.Log.Info("NP presence sent", "viewer", c.id.OnlineID, "friend", f.OnlineID, "online", online, "status", status)
 			c.snapshot[f.AccountID] = value
 		}
 	}
