@@ -290,3 +290,12 @@ func TestPresenceDisplayName(t *testing.T) {
  }
  if got := presenceStatus("switch", "Harbor", "GAME"); got != "Online on Harbor — GAME" { t.Fatal(got) }
 }
+
+func TestPresenceStatusDropsRawTitleID(t *testing.T) {
+	if got := presenceStatus("switch", "", "01009b500007c000"); got != "Online on Switch" {
+		t.Fatalf("raw title id leaked: %q", got)
+	}
+	if got := presenceStatus("switch", "harbor", "Terraria"); got != "Online on Harbor — Terraria" {
+		t.Fatalf("named title lost: %q", got)
+	}
+}

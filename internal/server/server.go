@@ -7,7 +7,6 @@ package server
 import (
 	"log/slog"
 	"net/http"
-	"strings"
 	"time"
 
 	"openpak/np-account/internal/community"
@@ -32,13 +31,15 @@ func Handler(svc *oauth.Service, communities ...*community.Service) http.Handler
 		w.Write([]byte("ok\n"))
 	})
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !strings.HasPrefix(r.URL.Path, "/trophy/") && r.URL.Path != "/entry" {
+		if r.URL.Path == "/healthz" {
 			mux.ServeHTTP(w, r)
 			return
 		}
+		// Every request is logged: the firmware reports failures only as an opaque error code,
+		// and the server used to say nothing about sign-ins it rejected or paths it did not know.
 		status := &trophyResponse{ResponseWriter: w, status: 200}
 		mux.ServeHTTP(status, r)
-		slog.Info("NP trophy HTTP", "method", r.Method, "path", r.URL.Path, "status", status.status)
+		slog.Info("NP HTTP", "method", r.Method, "host", r.Host, "path", r.URL.Path, "status", status.status, "ps3_status", w.Header().Get("X-I-5-Status"))
 	})
 }
 

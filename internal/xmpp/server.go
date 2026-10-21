@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -505,6 +506,8 @@ func offlineActivity(unix int64) string {
 	return `<x xmlns="jabber:x:delay" stamp=` + attr(time.Unix(unix, 0).UTC().Format(time.RFC3339)) + `/>`
 }
 
+var hexTitleID = regexp.MustCompile(`^[0-9A-Fa-f]{16}$`)
+
 // Prefer a recognized client name; otherwise identify the console network.
 func presenceStatus(namespace, client, title string) string {
 	platform := map[string]string{
@@ -525,7 +528,10 @@ func presenceStatus(namespace, client, title string) string {
 	}
 	status := "Online on " + platform
 	if title != "" {
-		status += " — " + title
+		// ponytail: raw title ids (16 hex digits) are noise to a player, no name lookup exists yet
+		if !hexTitleID.MatchString(title) {
+			status += " — " + title
+		}
 	}
 	return status
 }
