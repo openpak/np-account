@@ -36,6 +36,8 @@ type Handler struct {
 // Register adds the routes to mux.
 func (h *Handler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("POST /native/reg/getCountries.action", h.getCountries)
+	// The store opens with the same country list (empty reply = 0x80023087, element 0x5b list missing).
+	mux.HandleFunc("POST /native/store/getCountries.action", h.getCountries)
 	mux.HandleFunc("POST /native/reg/bindAccount.action", h.bindAccount)
 	// Authenticate also needs the CAM settings/service projection after identity.
 	// The bindAccount-only reply is insufficient for the account-management UI.
