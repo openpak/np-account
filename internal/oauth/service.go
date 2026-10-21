@@ -335,6 +335,7 @@ type NativeIdentity struct {
 	LinkID     string
 	OnlineID   string
 	Country    string // lower-case ISO code, "us" when unknown
+	Birthday   string // core accounts.birthday (ISO 8601 date), empty when unset
 	Credential []byte // 32-byte NP credential blob
 }
 
@@ -365,5 +366,5 @@ func (s *Service) NativeSignIn(ctx context.Context, username, password string) (
 		country = defaultCountry
 	}
 	s.log.Info("np native sign-in", "online_id", link.OnlineID)
-	return &NativeIdentity{AccountID: link.AccountID, LinkID: link.LinkID, OnlineID: link.OnlineID, Country: country, Credential: s.signer.Cred(link.LinkID, link.OnlineID)}, nil
+	return &NativeIdentity{AccountID: link.AccountID, LinkID: link.LinkID, OnlineID: link.OnlineID, Country: country, Birthday: acct.Birthday, Credential: s.signer.Cred(link.LinkID, link.OnlineID)}, nil
 }

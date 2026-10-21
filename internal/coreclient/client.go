@@ -54,6 +54,7 @@ type Account struct {
 	DisplayName string
 	Handle      string
 	Country     string
+	Birthday    string // ISO 8601 date, empty when unset
 }
 
 // Link is an active np link: the online ID bound to a core account.
@@ -157,7 +158,7 @@ func (c *Client) GetAccount(ctx context.Context, accountID string) (*Account, er
 	if resp.Status != accountv1.AccountStatus_ACCOUNT_STATUS_ACTIVE {
 		return nil, ErrAccountDisabled
 	}
-	return &Account{ID: resp.AccountId, DisplayName: resp.DisplayName, Handle: resp.Handle, Country: resp.Country}, nil
+	return &Account{ID: resp.AccountId, DisplayName: resp.DisplayName, Handle: resp.Handle, Country: resp.Country, Birthday: resp.Birthday}, nil
 }
 
 // GetLinkByAccount returns the account's active np link, or ErrNoLink.

@@ -31,6 +31,7 @@ type Identity struct {
 	LinkID    string `json:"link"`
 	OnlineID  string `json:"online"`
 	Country   string `json:"country"`
+	Birthday  string `json:"birthday,omitempty"` // core accounts.birthday, ISO 8601 date; empty when the core has none
 	Service   string `json:"service"`
 	ConsoleID string `json:"console"`
 	Issued    int64  `json:"iat"`
@@ -85,6 +86,34 @@ func elem(tag uint16, value []byte) []byte {
 	copy(b[n:], value)
 	return b
 }
+
+// languageEnglishUS is the CELL_SYSUTIL_LANG id written in the region field's last byte. The core
+// stores no language; firmware 4.93 copies this byte into its language setting (id 0 would be
+// Japanese), so OpenPak uses the same English default as the native bindAccount reply.
+const languageEnglishUS = 1
+
+// birthFields derives what vsh FUN_001bb88c reads from the ticket's status word (table 0x684558
+// index 9) and date (index 10): age in the low 7 bits of byte 0, bit 7 of byte 3 marking that a
+// date of birth follows. Both stay zero when the core holds no valid birthday.
+func birthFields(birthday string, now time.Time) (status []byte, dob []byte) {
+	status, dob = make([]byte, 4), make([]byte, 8)
+	b, err := time.Parse("2006-01-02", birthday)
+	if err != nil || b.After(now) {
+		return
+	}
+	age := now.Year() - b.Year()
+	if now.Month() < b.Month() || (now.Month() == b.Month() && now.Day() < b.Day()) {
+		age--
+	}
+	if age > 0x7f {
+		age = 0x7f
+	}
+	status[0], status[3] = byte(age), 0x80
+	if ms := b.UnixMilli(); ms >= 0 {
+		binary.BigEndian.PutUint64(dob, uint64(ms))
+	}
+	return
+}
 func fixed(s string, n int) []byte { b := make([]byte, n); copy(b, s); return b }
 func u64(v uint64) []byte          { b := make([]byte, 8); binary.BigEndian.PutUint64(b, v); return b }
 func (s *Signer) Issue(id Identity, ttl time.Duration) ([]byte, error) {
@@ -97,7 +126,10 @@ func (s *Signer) Issue(id Identity, ttl time.Duration) ([]byte, error) {
 	if _, err := rand.Read(nonce); err != nil {
 		return nil, err
 	}
-	values := [][]byte{nonce, make([]byte, 4), u64(uint64(id.Issued)), u64(uint64(id.Expires)), u64(onlineid.AccountID(id.AccountID)), fixed(id.OnlineID, 32), fixed(id.Country, 4), fixed("un", 4), fixed(id.Service, 24), make([]byte, 4), make([]byte, 4), make([]byte, 8)}
+	region := fixed(id.Country, 4)
+	region[3] = languageEnglishUS
+	status, dob := birthFields(id.Birthday, s.now())
+	values := [][]byte{nonce, make([]byte, 4), u64(uint64(id.Issued)), u64(uint64(id.Expires)), u64(onlineid.AccountID(id.AccountID)), fixed(id.OnlineID, 32), region, fixed("un", 4), fixed(id.Service, 24), make([]byte, 4), status, dob}
 	tags := []uint16{8, 1, 7, 7, 2, 4, 8, 4, 8, 0x3011, 1, 7}
 	var body []byte
 	for i, v := range values {

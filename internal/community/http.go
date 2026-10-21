@@ -65,7 +65,7 @@ func (s *Service) login(w http.ResponseWriter, r *http.Request) {
 	if ttl == 0 {
 		ttl = time.Hour
 	}
-	b, e := s.Tickets.Issue(ticket.Identity{AccountID: id.AccountID, LinkID: id.LinkID, OnlineID: id.OnlineID, Country: Country(id.Country), Service: f.Get("serviceid"), ConsoleID: strings.ToLower(console)}, ttl)
+	b, e := s.Tickets.Issue(ticket.Identity{AccountID: id.AccountID, LinkID: id.LinkID, OnlineID: id.OnlineID, Country: Country(id.Country), Birthday: id.Birthday, Service: f.Get("serviceid"), ConsoleID: strings.ToLower(console)}, ttl)
 	if e != nil {
 		http.Error(w, "ticket issuance failed", 503)
 		return
