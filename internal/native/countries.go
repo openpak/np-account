@@ -14,6 +14,7 @@ type Country struct {
 var DefaultCountries = []Country{
 	{"us", 1, []string{"en"}, map[string]string{"en": "United States"}},
 	{"gb", 2, []string{"en"}, map[string]string{"en": "United Kingdom"}},
+	{"pt", 2, []string{"pt", "en"}, map[string]string{"pt": "Portugal", "en": "Portugal"}},
 }
 
 // Countries encodes the getCountries reply: list 0x5b of countries, each with a list 0x5c of
