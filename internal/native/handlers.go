@@ -45,6 +45,11 @@ func (h *Handler) Register(mux *http.ServeMux) {
 	// not terminate the user's independently authenticated NP/XMPP session.
 	mux.HandleFunc("POST /native/cam/delSess.action", func(w http.ResponseWriter, r *http.Request) { h.reply(w, Reply()) })
 	mux.HandleFunc("POST /native/reg/delSess.action", func(w http.ResponseWriter, r *http.Request) { h.reply(w, Reply()) })
+	// Store guest session: the firmware's country/language/date-of-birth form posts here
+	// (account.country, account.language, account.dob/mob/yob) and expects the authenticate-style
+	// account element back. No server state: the guest has no identity, only the echoed region.
+	mux.HandleFunc("POST /native/store/crGuestSess.action", h.crGuestSess)
+	mux.HandleFunc("POST /native/store/delSess.action", func(w http.ResponseWriter, r *http.Request) { h.reply(w, Reply()) })
 	mux.HandleFunc("POST /native/", h.unknown)
 }
 
@@ -131,4 +136,24 @@ func CAMReply(id *oauth.NativeIdentity) []byte {
 	service = append(service, Elem(0x7d, nil)...)
 	service = append(service, Elem(0x7e, nil)...)
 	return append(reply, List(0x16, Elem(0x16, service))...)
+}
+
+// GuestReply is the crGuestSess success reply (vsh type 0x42 is parsed like authenticate): the
+// 0x5e account struct with a zero account id and no online ID, carrying the country and language the
+// form sent, followed by an empty 0x5d credential element (regcam FUN_000dd9ac needs 0x3c bytes).
+func GuestReply(country, language string) []byte {
+	v := make([]byte, 0x38)
+	copy(v[0x19:0x1c], strings.ToLower(country))
+	copy(v[0x1c:0x22], strings.ToLower(language))
+	v = append(v, Elem(0x5d, nil)...)
+	return Reply(Elem(0x5e, v))
+}
+
+func (h *Handler) crGuestSess(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, maxFormBytes)
+	if err := r.ParseForm(); err != nil {
+		h.reply(w, ErrorReply(resBadTextEtc))
+		return
+	}
+	h.reply(w, GuestReply(r.PostForm.Get("account.country"), r.PostForm.Get("account.language")))
 }

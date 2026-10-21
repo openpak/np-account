@@ -189,3 +189,13 @@ func TestCAMReplyPassesAccountLoaderBounds(t *testing.T) {
 		t.Fatal("old bind-only reply must fail CAM settings/service requirements")
 	}
 }
+
+func TestGuestReplyPassesAccountLoaderBounds(t *testing.T) {
+	b := native.GuestReply("PT", "pt")
+	if len(b) != 4+4+0x3c || binary.BigEndian.Uint16(b[4:]) != 0x5e || binary.BigEndian.Uint16(b[6:]) != 0x3c {
+		t.Fatalf("shape %x", b)
+	}
+	if string(b[8+0x19:8+0x1b]) != "pt" || string(b[8+0x1c:8+0x1e]) != "pt" {
+		t.Fatalf("region %x", b)
+	}
+}
