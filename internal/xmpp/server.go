@@ -451,13 +451,20 @@ func (c *client) refresh(ctx context.Context) error {
 	for _, f := range friends {
 		next[f.AccountID] = f
 		old, exists := c.roster[f.AccountID]
-		if !exists || old != f {
+		// LastSeenUnix is not part of the roster item; comparing it re-sent the item on every poll.
+		if !exists || rosterItem(old, false) != rosterItem(f, false) {
 			if e = c.send(`<iq type="set" id=` + attr("roster-"+f.OnlineID) + `><query xmlns="` + rosterNS + `">` + rosterItem(f, false) + `</query></iq>`); e != nil {
 				return e
 			}
 		}
 		status, online := byID[f.AccountID]
-		snapshot, _ := json.Marshal([]any{online, status, f.JID(), f.LastSeenUnix})
+		// An online friend's last-seen moves every poll and the firmware counts each <presence>
+		// as a new online friend (top-bar counter climbed), so only offline friends carry it.
+		lastSeen := f.LastSeenUnix
+		if online {
+			lastSeen = 0
+		}
+		snapshot, _ := json.Marshal([]any{online, status, f.JID(), lastSeen})
 		value := string(snapshot)
 		if c.snapshot[f.AccountID] != value {
 			kind := ""
