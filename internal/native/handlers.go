@@ -67,7 +67,15 @@ func (h *Handler) unknown(w http.ResponseWriter, r *http.Request) {
 	if log == nil {
 		log = slog.Default()
 	}
-	log.Warn("native: unhandled action", "path", r.URL.Path)
+	r.Body = http.MaxBytesReader(w, r.Body, maxFormBytes)
+	_ = r.ParseForm()
+	form := r.PostForm
+	for _, secret := range []string{"password", "username", "consoleId"} {
+		if form.Has(secret) {
+			form.Set(secret, "<redacted>")
+		}
+	}
+	log.Warn("native: unhandled action", "path", r.URL.Path, "form", form.Encode(), "cookie", r.Header.Get("Cookie") != "")
 	h.reply(w, Reply())
 }
 
