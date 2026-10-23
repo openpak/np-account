@@ -2,9 +2,9 @@
 
 OpenPak's PlayStation 3 account and sign-in adapter. It answers what the PS3 4.93 firmware calls when
 you sign in on the XMB (the OAuth sign-in, the console token and the network connection test) and
-translates it into calls on the central [`account`](../account) core. It **owns no identity**: no
+translates it into calls on the central [`account`](../../../../platforms/core/infra/account) core. It **owns no identity**: no
 passwords, no accounts, no links. The core stays console-agnostic; everything Sony-shaped lives here,
-the same split as [`nn-account`](../nn-account) for Wii U/3DS.
+the same split as [`nn-account`](../../../wiiu-3ds/infra/nn-account) for Wii U/3DS.
 
 Architecture: Pier firmware and real PS3s use the same native protocol endpoints.
 The central account core owns identity and relationships. No emulator-only game
@@ -169,6 +169,6 @@ The OAuth surface below remains unconfirmed. The native, nav/auth, profile and X
 
 `cmd/np-account` main; `internal/config`, `coreclient` (the only code that talks to the core), `oauth`
 (token/authorize/console token), `nettest`, `token` (signing), `onlineid` (rules, `user_id`), `server`
-(routes); `internal/accountpb` is the vendored core proto (refresh from `../account/proto/openpak/account/v1`);
+(routes); `internal/accountpb` is the vendored core proto (refresh from `../../../../platforms/core/infra/account/proto/openpak/account/v1`);
 `internal/fakecore` is the in-process core the tests run against. License: AGPL-3.0-only, like the rest of the
 OpenPak servers.
