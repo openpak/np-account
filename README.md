@@ -22,10 +22,10 @@ signed-in XMB; the authenticated stream also connects in Pier. Populated-roster
 visual verification remains a separate check. OAuth endpoints remain unconfirmed
 for this firmware path. `cmd/np-account-lab` uses a fake core for isolated testing.
 
-Design: [`docs/ps3/np-account-design.md`](../docs/ps3/np-account-design.md). Wire facts (from firmware
-strings, not from a capture): [`docs/ps3/psn-signin-findings.md`](../docs/ps3/psn-signin-findings.md).
+Design: internal research notes. Wire facts (from firmware
+strings, not from a capture): internal research notes.
 Protocol knowledge comes only from those documents and the OpenPak repos; see the
-[clean-room policy](../docs/clean-room-policy.md).
+[clean-room policy](https://docs.openpak.org/contributors/clean-room/).
 
 ## Run
 
@@ -77,7 +77,7 @@ There are no defaults for secrets; startup fails naming the missing ones. Tests 
 | `GET /networktest/get_2m` | 2 MiB of a fixed repeating byte pattern |
 | `POST /networktest/post`, `/networktest/post_128` | read and discard the body (first 16 MiB), `200` empty |
 | `GET /networktest/trial.txt` | `OK\n` |
-| `POST /native/reg/getCountries.action` | binary TLV country list (see `docs/ps3/psn-signin-findings.md`) |
+| `POST /native/reg/getCountries.action` | binary TLV country list (see internal research notes) |
 | `POST /native/reg/bindAccount.action` | `username` (email) + `password` -> core `VerifyPassword`; success = TLV element `0x5e` (account id, online ID, country, language, NP credential blob); bad password = result byte `0x14`, suspended = `0x1b`. 2FA accounts are refused (no field for it) |
 | `GET /healthz` | `ok` |
 

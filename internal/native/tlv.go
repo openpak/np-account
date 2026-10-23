@@ -1,6 +1,6 @@
 // Package native serves the PS3 firmware's "native" registration web service
 // (POST /native/reg/<name>.action): replies are big-endian binary TLV, not XML or JSON.
-// Layout from the firmware (docs/ps3/psn-signin-findings.md): a 4-byte prefix (byte 1 = result,
+// Layout from the firmware (internal research notes): a 4-byte prefix (byte 1 = result,
 // 0 = OK), then elements of u16 tag | u16 length | value. A list is a tag-1 element whose value
 // starts u16 id | u16 count, followed by count child elements tagged id.
 package native

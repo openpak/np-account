@@ -13,7 +13,7 @@ import (
 
 const maxFormBytes = 64 << 10
 
-// Result bytes the firmware maps to on-screen messages (docs/ps3/psn-signin-findings.md).
+// Result bytes the firmware maps to on-screen messages (internal research notes).
 const (
 	resWrongIDPW  = 0x14 // "The sign-in ID or password is incorrect"
 	resSuspended  = 0x1b // account suspended or banned
@@ -112,7 +112,7 @@ func (h *Handler) bindAccount(w http.ResponseWriter, r *http.Request) {
 }
 
 // BindReply is the bindAccount success reply: one element 0x5e holding the account struct followed
-// by element 0x5d, the NP credential blob (layout in docs/ps3/psn-signin-findings.md).
+// by element 0x5d, the NP credential blob (layout in internal research notes).
 func BindReply(id *oauth.NativeIdentity) []byte {
 
 	v := make([]byte, 0x38)
