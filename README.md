@@ -136,6 +136,15 @@ The `error_code` numbers are assigned by OpenPak, not Sony's.
   no storage needed. Not derived from the online ID, so it does not change if the ID is renamed on the same link; a new link gets a new `user_id`.
 - **Tokens** are HMAC-SHA256 signed with per-purpose keys derived from `NP_TOKEN_KEY` and verified statelessly,
   except that grant codes are marked used in process memory: a restart forgets them (they live 5 minutes).
+- **Account events** (`internal/events`): the core's event stream is polled every 5 s.
+  `account_banned` and `account_delete_started` deny the account here at once (sign-in, grant/authorize,
+  tickets and the XMPP recheck read it as disabled) and close its open XMPP streams, which expires their
+  presence leases; `account_unbanned` and `account_restored` lift that (a ban and a closure are tracked
+  apart, so restoring a banned account keeps it banned); `account_deleted` cuts the streams and drops
+  everything held for the account. The online ID is the core np link's subject, which the core retires at
+  final erasure, so nothing else is held here to release. The cursor lives in memory: a start replays the
+  stream from the beginning, which converges on the same state, and a redelivered version is a no-op.
+  Same `NP_CORE_KEY`; no new variable.
 
 ## Not yet
 
@@ -144,7 +153,6 @@ Deliberately out of this cut:
 - Sony-compatible ticket signatures and title-specific ticket semantics for games. The captured XMB path uses an owner-local Ed25519-authenticated extension.
 - The Silk account pages (register, password reset) on `account.<env>.ac.playstation.net`, commerce and store hosts.
 - Invitations and private/offline messages. Friends use core `Social`; presence uses leased core `Sessions`.
-- Following core `Events` (revocation is only checked at sign-in and at grant/authorize time).
 - Rate limiting of password attempts on this side (the core limits second-factor attempts; password limits are
   the core's business).
 - Multi-instance grant-code single use (one process only), persistence, metrics.

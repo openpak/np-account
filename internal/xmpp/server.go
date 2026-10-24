@@ -52,7 +52,9 @@ func (s *Server) Serve(ctx context.Context, ln net.Listener) error {
 	if s.PollInterval == 0 {
 		s.PollInterval = 10 * time.Second
 	}
+	s.mu.Lock()
 	s.clients = map[*client]struct{}{}
+	s.mu.Unlock()
 	go func() {
 		<-ctx.Done()
 		ln.Close()
@@ -82,6 +84,25 @@ func (s *Server) Serve(ctx context.Context, ln net.Listener) error {
 		go c.run(ctx)
 	}
 }
+
+// Disconnect closes every stream signed in as the account and returns how
+// many there were. Each stream's own teardown expires its presence lease.
+func (s *Server) Disconnect(account string) int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	n := 0
+	for c := range s.clients {
+		c.stateMu.Lock()
+		mine := c.id.AccountID == account
+		c.stateMu.Unlock()
+		if mine && account != "" {
+			c.conn.Close()
+			n++
+		}
+	}
+	return n
+}
+
 func (c *client) send(text string) error {
 	c.writeMu.Lock()
 	defer c.writeMu.Unlock()
@@ -124,7 +145,9 @@ func (c *client) run(parent context.Context) {
 		c.authFailure()
 		return
 	}
+	c.stateMu.Lock()
 	c.id = id
+	c.stateMu.Unlock()
 	if c.send(`<success xmlns="`+saslNS+`"/>`) != nil {
 		return
 	}

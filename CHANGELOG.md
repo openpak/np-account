@@ -1,5 +1,10 @@
 # Changelog: np-account
 
+## Unreleased
+
+- Follows the account core's event stream: a ban or a started deletion denies the account at once and
+  closes its XMPP streams; unban and restore lift it; final erasure cuts and drops the account.
+
 ## v0.2.1 — 2026-10-16
 
 - PS3 TLS leaves keep the SNI exactly as the firmware sent it (mixed-case service IDs).

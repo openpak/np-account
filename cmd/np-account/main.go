@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"openpak/np-account/internal/community"
+	"openpak/np-account/internal/events"
 	"openpak/np-account/internal/ticket"
 	"openpak/np-account/internal/tlsfront"
 	"openpak/np-account/internal/xmpp"
@@ -37,7 +38,11 @@ func main() {
 	}
 	defer core.Close()
 
-	svc := oauth.New(cfg, core, nil, log)
+	// Bans and deletions from the core's event stream: denied here at once and
+	// their open streams cut (internal/events).
+	standing := events.NewState()
+	gate := events.Gate{Client: core, State: standing}
+	svc := oauth.New(cfg, gate, nil, log)
 	var comm *community.Service
 	if cfg.TicketKeyPath != "" {
 		signer, e := ticket.Load(cfg.TicketKeyPath)
@@ -45,7 +50,7 @@ func main() {
 			log.Error("ticket key", "err", e)
 			os.Exit(2)
 		}
-		comm = &community.Service{Auth: svc, Core: core, Tickets: signer, TTL: cfg.AccessTTL, Client: cfg.SessionClient, OS: cfg.SessionOS}
+		comm = &community.Service{Auth: svc, Core: gate, Tickets: signer, TTL: cfg.AccessTTL, Client: cfg.SessionClient, OS: cfg.SessionOS}
 
 		if path := os.Getenv("NP_TROPHY_RESOURCE_KEY"); path != "" {
 			key, e := os.ReadFile(path)
@@ -83,6 +88,7 @@ func main() {
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+	consumer := &events.Consumer{Core: core, State: standing, Log: log}
 	if comm != nil {
 		ln, e := net.Listen("tcp", cfg.XMPPListenAddr)
 		if e != nil {
@@ -95,8 +101,10 @@ func main() {
 			front.Fallback = "us.us.np.communication.playstation.net"
 			ln = tls.NewListener(ln, cfgTLS)
 		}
+		xs := &xmpp.Server{Service: comm, Log: log}
+		consumer.Cut = xs.Disconnect
 		go func() {
-			if e := (&xmpp.Server{Service: comm, Log: log}).Serve(ctx, ln); e != nil {
+			if e := xs.Serve(ctx, ln); e != nil {
 				log.Error("XMPP serve", "err", e)
 				stop()
 			}
@@ -106,6 +114,7 @@ func main() {
 		}
 		log.Info("NP community enabled", "xmpp_addr", cfg.XMPPListenAddr)
 	}
+	go consumer.Run(ctx, 5*time.Second)
 	go func() {
 		<-ctx.Done()
 		sctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

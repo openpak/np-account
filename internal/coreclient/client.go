@@ -65,10 +65,11 @@ type Link struct {
 }
 
 type Client struct {
-	conn  *grpc.ClientConn
-	key   string
-	ident accountv1.IdentityClient
-	links accountv1.LinksClient
+	conn   *grpc.ClientConn
+	key    string
+	ident  accountv1.IdentityClient
+	links  accountv1.LinksClient
+	events accountv1.EventsClient
 }
 
 // Dial connects to the core at addr (plaintext; the core is on the internal
@@ -82,8 +83,9 @@ func Dial(addr, internalKey string, opts ...grpc.DialOption) (*Client, error) {
 	}
 	return &Client{
 		conn: conn, key: internalKey,
-		ident: accountv1.NewIdentityClient(conn),
-		links: accountv1.NewLinksClient(conn),
+		ident:  accountv1.NewIdentityClient(conn),
+		links:  accountv1.NewLinksClient(conn),
+		events: accountv1.NewEventsClient(conn),
 	}, nil
 }
 
@@ -230,4 +232,29 @@ func (c *Client) ClaimOnlineID(ctx context.Context, accountID, onlineID string) 
 		return nil, ErrUnavailable
 	}
 	return &Link{LinkID: res.LinkId, AccountID: accountID, OnlineID: onlineID}, nil
+}
+
+// Event is one entry of the core's invalidation stream.
+type Event struct {
+	Version   uint64
+	ID        string
+	Type      string
+	AccountID string
+	Namespace string
+	SubjectID string
+}
+
+// PollEvents returns up to limit events after sinceVersion, in version order.
+func (c *Client) PollEvents(ctx context.Context, sinceVersion uint64, limit int) ([]Event, error) {
+	ctx, cancel := c.ctx(ctx)
+	defer cancel()
+	resp, err := c.events.PollEvents(ctx, &accountv1.PollEventsRequest{SinceVersion: sinceVersion, Limit: int32(limit)})
+	if err != nil {
+		return nil, ErrUnavailable
+	}
+	out := make([]Event, 0, len(resp.GetEvents()))
+	for _, e := range resp.GetEvents() {
+		out = append(out, Event{Version: e.GetVersion(), ID: e.GetEventId(), Type: e.GetType(), AccountID: e.GetAccountId(), Namespace: e.GetNamespace(), SubjectID: e.GetSubjectId()})
+	}
+	return out, nil
 }

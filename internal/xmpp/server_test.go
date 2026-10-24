@@ -299,3 +299,26 @@ func TestPresenceStatusDropsRawTitleID(t *testing.T) {
 		t.Fatalf("named title lost: %q", got)
 	}
 }
+
+func TestDisconnectClosesOnlyThatAccountsStreams(t *testing.T) {
+	s := &Server{clients: map[*client]struct{}{}}
+	mk := func(acct string) net.Conn {
+		a, b := net.Pipe()
+		c := &client{s: s, conn: a}
+		c.id.AccountID = acct
+		s.clients[c] = struct{}{}
+		return b
+	}
+	gone, kept := mk("a"), mk("b")
+	defer kept.Close()
+	if n := s.Disconnect("a"); n != 1 {
+		t.Fatalf("closed %d", n)
+	}
+	gone.SetReadDeadline(time.Now().Add(time.Second))
+	if _, err := gone.Read(make([]byte, 1)); err == nil {
+		t.Fatal("a's stream is still open")
+	}
+	if s.Disconnect("") != 0 {
+		t.Fatal("an empty account matches nothing")
+	}
+}
