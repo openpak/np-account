@@ -3,7 +3,7 @@
 Implemented locally on 2026-10-25. Existing np-account and np-trophy repository
 histories remain intact. np-community and np-common are independent sibling Git
 repositories; their origin URLs name openpak/np-community and openpak/np-common.
-No remote repositories, release tags or live deployments are created by this change.
+The repositories and release images are published. See the production rollout below.
 
 ## Ownership and contracts
 
@@ -115,4 +115,19 @@ Docker builds using Go 1.26 produce all three amd64 images as user `app`:
 `openpak/np-account:split-check`, `openpak/np-community:split-check`, and
 `openpak/np-trophy:split-check`. Workflow YAML and the Compose sample validate.
 Podman build verification hit an overlay-mount limitation on the scratch filesystem;
-Docker completed the same Dockerfiles. No live deployment or console UI test was run.
+Docker completed the same Dockerfiles. Console UI testing remains a separate check.
+
+## Production rollout (2026-10-25)
+
+The independent services are deployed: np-account **0.3.0**, np-community **0.1.1**,
+and np-trophy **0.2.0**. Both image architectures are published and CI passed.
+The live services use separate restricted environment files and pinned release
+references. Community owns public TCP 5223; the existing HTTP/TLS entry point
+and console DNS/trust configuration are preserved.
+
+The existing trophy database and signing, resource and TLS keys were reused.
+Verified native self-profile, canonical roster, trophy reads/discovery, private
+API isolation, network-test HTTP and publicly reachable firmware-compatible TLS.
+An authenticated TLS/XMPP connection continued responding throughout independent
+account and trophy restarts. Original images/configuration and a database dump
+are retained for rollback. No real-console UI or game trophy-sync result is claimed.
