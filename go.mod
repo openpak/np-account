@@ -22,6 +22,9 @@ require openpak/np-community v0.0.0
 
 replace openpak/np-community => ../np-community
 
-require openpak/np-trophy v0.0.0
+require (
+	github.com/openpak/account-api v0.1.0
+	openpak/np-trophy v0.0.0
+)
 
 replace openpak/np-trophy => ../np-trophy

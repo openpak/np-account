@@ -12,7 +12,7 @@ import (
 
 	"openpak/np-account/internal/config"
 	"openpak/np-account/internal/oauth"
-	accountv1 "openpak/np-common/accountpb"
+	accountv1 "github.com/openpak/account-api/openpak/account/v1"
 	"openpak/np-common/coreclient"
 	"openpak/np-common/fakecore"
 	"openpak/np-common/onlineid"
