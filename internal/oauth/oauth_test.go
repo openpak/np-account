@@ -10,12 +10,12 @@ import (
 	"testing"
 	"time"
 
-	accountv1 "openpak/np-account/internal/accountpb"
 	"openpak/np-account/internal/config"
-	"openpak/np-account/internal/coreclient"
-	"openpak/np-account/internal/fakecore"
 	"openpak/np-account/internal/oauth"
-	"openpak/np-account/internal/onlineid"
+	accountv1 "openpak/np-common/accountpb"
+	"openpak/np-common/coreclient"
+	"openpak/np-common/fakecore"
+	"openpak/np-common/onlineid"
 )
 
 // All values below are fake test values, not Sony's.

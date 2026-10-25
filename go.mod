@@ -3,8 +3,8 @@ module openpak/np-account
 go 1.26.0
 
 require (
-	google.golang.org/grpc v1.83.2
-	google.golang.org/protobuf v1.36.11
+	google.golang.org/grpc v1.83.2 // indirect
+	google.golang.org/protobuf v1.36.11 // indirect
 )
 
 require (
@@ -13,3 +13,15 @@ require (
 	golang.org/x/text v0.41.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260526163538-3dc84a4a5aaa // indirect
 )
+
+require openpak/np-common v0.0.0
+
+replace openpak/np-common => ../np-common
+
+require openpak/np-community v0.0.0
+
+replace openpak/np-community => ../np-community
+
+require openpak/np-trophy v0.0.0
+
+replace openpak/np-trophy => ../np-trophy

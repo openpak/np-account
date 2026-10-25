@@ -8,14 +8,15 @@ import (
 	"crypto/subtle"
 	"errors"
 	"log/slog"
+	"openpak/np-common/identity"
 	"strings"
 	"sync"
 	"time"
 
 	"openpak/np-account/internal/config"
-	"openpak/np-account/internal/coreclient"
-	"openpak/np-account/internal/onlineid"
 	"openpak/np-account/internal/token"
+	"openpak/np-common/coreclient"
+	"openpak/np-common/onlineid"
 )
 
 // Lifetimes of the tokens issued here.
@@ -357,7 +358,7 @@ func (s *Service) NativeSignIn(ctx context.Context, username, password string) (
 	if err != nil {
 		return nil, s.coreErr(err)
 	}
-	link, provisionErr := EnsureNPLink(ctx, s.core, acct)
+	link, provisionErr := identity.EnsureNPLink(ctx, s.core, acct)
 	if provisionErr != nil {
 		return nil, s.coreErr(provisionErr)
 	}

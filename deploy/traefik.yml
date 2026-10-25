@@ -1,0 +1,36 @@
+# Merge with the operator's existing dynamic config. Entrypoint names are examples.
+# Preserve the existing PS3 HTTPS hostname rules if they differ from these families.
+tcp:
+  routers:
+    ps3-https:
+      entryPoints: [websecure]
+      rule: HostSNIRegexp(`^.+\.playstation\.(net|org)$`)
+      service: ps3-account-tls
+      tls:
+        passthrough: true
+    ps3-xmpp:
+      entryPoints: [ps3-xmpp]
+      rule: HostSNI(`*`)
+      service: ps3-community-xmpp
+      tls:
+        passthrough: true
+  services:
+    ps3-account-tls:
+      loadBalancer:
+        servers:
+          - address: openpak-np-account:8443
+    ps3-community-xmpp:
+      loadBalancer:
+        servers:
+          - address: openpak-np-community:8523
+http:
+  routers:
+    ps3-http:
+      entryPoints: [web]
+      rule: HostRegexp(`^.+\.playstation\.(net|org)$`)
+      service: ps3-account-http
+  services:
+    ps3-account-http:
+      loadBalancer:
+        servers:
+          - url: http://openpak-np-account:8002

@@ -1,5 +1,5 @@
 package main
-import("context";"encoding/base64";"fmt";"io";"net/http";"os";"strings";"time";"openpak/np-account/internal/config";"openpak/np-account/internal/coreclient";"openpak/np-account/internal/ticket")
+import("context";"encoding/base64";"fmt";"io";"net/http";"os";"strings";"time";"openpak/np-account/internal/config";"openpak/np-common/coreclient";"openpak/np-common/ticket")
 func main(){
  cfg,e:=config.Load(os.Getenv);if e!=nil{panic(e)}
  c,e:=coreclient.Dial(cfg.CoreAddress,cfg.CoreKey);if e!=nil{panic(e)};defer c.Close()

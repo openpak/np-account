@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Split PS3 account, community/XMPP and native trophies into independent services; share protocol primitives through vendored np-common.
+
+
+## Unreleased
+
 - Follows the account core's event stream: a ban or a started deletion denies the account at once and
   closes its XMPP streams; unban and restore lift it; final erasure cuts and drops the account.
 

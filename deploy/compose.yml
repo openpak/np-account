@@ -1,0 +1,48 @@
+# Samples only. Supply each repository's .env, existing core/database and key directory.
+services:
+  np-account:
+    image: ghcr.io/openpak/np-account:local
+    build: ..
+    container_name: openpak-np-account
+    env_file: ../.env
+    environment:
+      NP_HTTP_ADDR: ':8002'
+      NP_COMMUNITY_URL: http://np-community:8003
+      NP_TROPHY_URL: http://np-trophy:8531
+      NP_TLS_ADDR: ':8443'
+      NP_TLS_CA_CERT: /run/ps3/ca.crt
+      NP_TLS_CA_KEY: /run/ps3/ca.key
+    volumes:
+      - ${NP_PS3_KEYS_DIR:?Set NP_PS3_KEYS_DIR}:/run/ps3:ro
+    networks: [openpak]
+    restart: unless-stopped
+  np-community:
+    image: ghcr.io/openpak/np-community:local
+    build: ../../np-community
+    container_name: openpak-np-community
+    env_file: ../../np-community/.env
+    environment:
+      NP_HTTP_ADDR: ':8003'
+      NP_XMPP_ADDR: ':8523'
+      NP_XMPP_TLS: '1'
+      NP_TLS_CA_CERT: /run/ps3/ca.crt
+      NP_TLS_CA_KEY: /run/ps3/ca.key
+    volumes:
+      - ${NP_PS3_KEYS_DIR:?Set NP_PS3_KEYS_DIR}:/run/ps3:ro
+    networks: [openpak]
+    restart: unless-stopped
+  np-trophy:
+    image: ghcr.io/openpak/np-trophy:local
+    build: ../../np-trophy
+    container_name: openpak-np-trophy
+    env_file: ../../np-trophy/.env
+    environment:
+      NP_HTTP_ADDR: ':8531'
+      NP_TROPHY_ADDR: ':8530'
+    volumes:
+      - ${NP_PS3_KEYS_DIR:?Set NP_PS3_KEYS_DIR}:/run/ps3:ro
+    networks: [openpak]
+    restart: unless-stopped
+networks:
+  openpak:
+    external: true

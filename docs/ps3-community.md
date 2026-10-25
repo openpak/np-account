@@ -1,3 +1,11 @@
+# Historical combined-adapter notes
+
+The services are now split. Use [service-split.md](service-split.md) for current
+processes, ports and migration. Operator commands below now run in np-community;
+account owns native binding and /nav/auth, community owns profiles and XMPP, and
+np-trophy owns trophy discovery and protocol. The remaining text records the
+pre-split protocol behavior.
+
 # Authenticated PS3 community adapter
 
 The captured XMB path is native bindAccount → POST /nav/auth → self profile →

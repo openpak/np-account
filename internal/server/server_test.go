@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"openpak/np-account/internal/config"
-	"openpak/np-account/internal/coreclient"
-	"openpak/np-account/internal/fakecore"
 	"openpak/np-account/internal/oauth"
 	"openpak/np-account/internal/server"
+	"openpak/np-common/coreclient"
+	"openpak/np-common/fakecore"
 )
 
 func TestRoutes(t *testing.T) {

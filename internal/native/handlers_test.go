@@ -11,12 +11,12 @@ import (
 	"testing"
 	"time"
 
-	accountv1 "openpak/np-account/internal/accountpb"
 	"openpak/np-account/internal/config"
-	"openpak/np-account/internal/coreclient"
-	"openpak/np-account/internal/fakecore"
 	"openpak/np-account/internal/native"
 	"openpak/np-account/internal/oauth"
+	accountv1 "openpak/np-common/accountpb"
+	"openpak/np-common/coreclient"
+	"openpak/np-common/fakecore"
 )
 
 const coreKey = "fake-core-key-fake-core-key-fake-core-key"

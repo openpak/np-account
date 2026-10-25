@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"openpak/np-account/internal/oauth"
-	"openpak/np-account/internal/onlineid"
+	"openpak/np-common/onlineid"
 )
 
 const maxFormBytes = 64 << 10
