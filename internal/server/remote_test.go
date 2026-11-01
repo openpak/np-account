@@ -28,7 +28,7 @@ func TestRemoteRoutingAndUnavailableServices(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, path := range []string{"/basic_view/sec/get_self_profile", "/basic_update/sec/update_ci", "/a/cap.png", "/np/resource/title/NPXX00001_00/NPXX00001_00-matching.xml", "/trophy/sec/sync_trophies", "/np/resource/trophy/trophy-status.xml"} {
+	for _, path := range []string{"/basic_view/sec/get_self_profile", "/basic_update/sec/update_ci", "/a/cap.png", "/np/resource/title/NPXX00001_00/NPXX00001_00-matching.xml", "/nsx/sec/x/c/NSXWSV/feed.xml", "/trophy/sec/sync_trophies", "/np/resource/trophy/trophy-status.xml"} {
 		r := httptest.NewRequest("POST", "http://firmware.playstation.net"+path, strings.NewReader("native body"))
 		w := httptest.NewRecorder()
 		h.ServeHTTP(w, r)

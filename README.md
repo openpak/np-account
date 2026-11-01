@@ -19,7 +19,7 @@ OpenPak's PS3 Account Server.
 | `/networktest/*` | Network tests |
 | `/update/ps3/list/{region}/ps3-updatelist.txt` | PS3 update list |
 | `/healthz` | Health check |
-| `/basic_view/`, `/basic_update/`, `/a/`, `/np/resource/title/` | Forwarded to np-community |
+| `/basic_view/`, `/basic_update/`, `/a/`, `/np/resource/title/`, `/nsx/` | Forwarded to np-community |
 | `/trophy/`, `/np/resource/trophy/` | Forwarded to np-trophy |
 
 ## Run
