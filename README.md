@@ -22,6 +22,7 @@ OpenPak's PS3 Account Server.
 | `/basic_view/`, `/basic_update/`, `/a/`, `/np/resource/title/`, `/nsx/` | Forwarded to np-community |
 | `/trophy/`, `/np/resource/trophy/` | Forwarded to np-trophy |
 | `/user_storage/`, `/tss/`, `/np/resource/title/{commid}/storage/` | Forwarded to np-tus (`NP_TUS_URL`, optional) |
+| `/ranking_update/`, `/ranking_view/`, `/ranking_clan_view/`, `/np/resource/title/{commid}/ranking/` | Forwarded to np-score (`NP_SCORE_URL`, optional) |
 
 ## Run
 

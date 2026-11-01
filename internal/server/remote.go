@@ -13,8 +13,8 @@ import (
 
 // RemoteHandler preserves the existing HTTP/TLS entry point while extracted services own their routes.
 // XMPP is routed directly to np-community and never passes through np-account.
-// tusURL is optional: without it TUS and TSS paths fall through to the local 404.
-func RemoteHandler(auth *oauth.Service, issuer *nav.Service, communityURL, trophyURL, tusURL string) (http.Handler, error) {
+// tusURL and scoreURL are optional: without one its paths fall through to the local 404.
+func RemoteHandler(auth *oauth.Service, issuer *nav.Service, communityURL, trophyURL, tusURL, scoreURL string) (http.Handler, error) {
 	community, err := remote("NP_COMMUNITY_URL", communityURL)
 	if err != nil {
 		return nil, err
@@ -30,13 +30,22 @@ func RemoteHandler(auth *oauth.Service, issuer *nav.Service, communityURL, troph
 	for _, path := range []string{"/trophy/", "/np/resource/trophy/"} {
 		mux.Handle(path, trophy)
 	}
-	if tusURL != "" {
-		tus, err := remote("NP_TUS_URL", tusURL)
+	for _, opt := range []struct {
+		name, url string
+		paths     []string
+	}{
+		{"NP_TUS_URL", tusURL, []string{"/user_storage/", "/tss/", "/np/resource/title/{commid}/storage/"}},
+		{"NP_SCORE_URL", scoreURL, []string{"/ranking_update/", "/ranking_view/", "/ranking_clan_view/", "/np/resource/title/{commid}/ranking/"}},
+	} {
+		if opt.url == "" {
+			continue
+		}
+		h, err := remote(opt.name, opt.url)
 		if err != nil {
 			return nil, err
 		}
-		for _, path := range []string{"/user_storage/", "/tss/", "/np/resource/title/{commid}/storage/"} {
-			mux.Handle(path, tus)
+		for _, path := range opt.paths {
+			mux.Handle(path, h)
 		}
 	}
 	mux.Handle("/", Handler(auth, issuer))
