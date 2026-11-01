@@ -6,7 +6,7 @@ OpenPak's PS3 Account Server.
 | --- | --- |
 | Network | PS3 |
 | Role | PlayStation 3 sign-in adapter over the account core: native account binding, OAuth, console tokens and `/nav/auth` ticket issuance |
-| Depends on | [`account`](https://github.com/openpak/account) (core, `NP_CORE_ADDR`), [`np-community`](https://github.com/openpak/np-community), [`np-trophy`](https://github.com/openpak/np-trophy) |
+| Depends on | [`account`](https://github.com/openpak/account) (core, `NP_CORE_ADDR`), [`np-community`](https://github.com/openpak/np-community), [`np-trophy`](https://github.com/openpak/np-trophy), [`np-tus`](https://github.com/openpak/np-tus) |
 | Image | `ghcr.io/openpak/np-account` |
 | Licence | AGPL-3.0-only |
 
@@ -21,6 +21,7 @@ OpenPak's PS3 Account Server.
 | `/healthz` | Health check |
 | `/basic_view/`, `/basic_update/`, `/a/`, `/np/resource/title/`, `/nsx/` | Forwarded to np-community |
 | `/trophy/`, `/np/resource/trophy/` | Forwarded to np-trophy |
+| `/user_storage/`, `/tss/`, `/np/resource/title/{commid}/storage/` | Forwarded to np-tus (`NP_TUS_URL`, optional) |
 
 ## Run
 

@@ -32,6 +32,7 @@ hosts can continue to reach np-account, which forwards by path:
 
 - `/basic_view/`, `/basic_update/`, `/a/`, `/np/resource/title/` → `NP_COMMUNITY_URL`.
 - `/trophy/`, `/np/resource/trophy/` → `NP_TROPHY_URL` (native port 8531).
+- `/user_storage/`, `/tss/`, `/np/resource/title/{commid}/storage/` → `NP_TUS_URL` (np-tus, port 8532; optional).
 - Account, network-test and update-list routes remain local.
 
 Both upstream origins are mandatory and checked at account startup. Forwarding

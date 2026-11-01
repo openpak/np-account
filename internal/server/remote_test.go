@@ -20,21 +20,25 @@ func TestRemoteRoutingAndUnavailableServices(t *testing.T) {
 			w.Write(body)
 		}))
 	}
-	community, trophy := upstream("community"), upstream("trophy")
+	community, trophy, tus := upstream("community"), upstream("trophy"), upstream("tus")
+	defer tus.Close()
 	defer community.Close()
 	defer trophy.Close()
 	auth := oauth.New(&config.Config{TokenKey: strings.Repeat("k", 32)}, nil, nil, nil)
-	h, err := server.RemoteHandler(auth, nil, community.URL, trophy.URL)
+	h, err := server.RemoteHandler(auth, nil, community.URL, trophy.URL, tus.URL)
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, path := range []string{"/basic_view/sec/get_self_profile", "/basic_update/sec/update_ci", "/a/cap.png", "/np/resource/title/NPXX00001_00/NPXX00001_00-matching.xml", "/nsx/sec/x/c/NSXWSV/feed.xml", "/trophy/sec/sync_trophies", "/np/resource/trophy/trophy-status.xml"} {
+	for _, path := range []string{"/basic_view/sec/get_self_profile", "/basic_update/sec/update_ci", "/a/cap.png", "/np/resource/title/NPXX00001_00/NPXX00001_00-matching.xml", "/nsx/sec/x/c/NSXWSV/feed.xml", "/user_storage/sec/get_data", "/tss/np/NPWR01234_00/NPWR01234_00-0.tss", "/np/resource/title/NPWR01234_00/storage/NPWR01234_00-storage.xml", "/trophy/sec/sync_trophies", "/np/resource/trophy/trophy-status.xml"} {
 		r := httptest.NewRequest("POST", "http://firmware.playstation.net"+path, strings.NewReader("native body"))
 		w := httptest.NewRecorder()
 		h.ServeHTTP(w, r)
 		owner := "community"
 		if strings.Contains(path, "/trophy/") {
 			owner = "trophy"
+		}
+		if strings.Contains(path, "/user_storage/") || strings.Contains(path, "/tss/") || strings.Contains(path, "/storage/") {
+			owner = "tus"
 		}
 		if w.Code != 200 || w.Header().Get("X-Owner") != owner || w.Header().Get("X-Original-Host") != "firmware.playstation.net" || w.Body.String() != "native body" {
 			t.Fatalf("%s: %d %v %s", path, w.Code, w.Header(), w.Body)
@@ -57,7 +61,7 @@ func TestRemoteRoutingAndUnavailableServices(t *testing.T) {
 		t.Fatal("trophy failure broke community")
 	}
 	for _, bad := range []string{"", "file:///etc/passwd", "http://user:pass@localhost", "http://localhost/path", "http://localhost?query=x"} {
-		if _, err = server.RemoteHandler(auth, nil, bad, trophy.URL); err == nil {
+		if _, err = server.RemoteHandler(auth, nil, bad, trophy.URL, ""); err == nil {
 			t.Errorf("accepted invalid origin %q", bad)
 		}
 	}
