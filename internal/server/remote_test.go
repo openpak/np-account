@@ -21,17 +21,19 @@ func TestRemoteRoutingAndUnavailableServices(t *testing.T) {
 		}))
 	}
 	community, trophy, tus, score, update := upstream("community"), upstream("trophy"), upstream("tus"), upstream("score"), upstream("update")
+	uploader := upstream("uploader")
+	defer uploader.Close()
 	defer update.Close()
 	defer tus.Close()
 	defer score.Close()
 	defer community.Close()
 	defer trophy.Close()
 	auth := oauth.New(&config.Config{TokenKey: strings.Repeat("k", 32)}, nil, nil, nil)
-	h, err := server.RemoteHandler(auth, nil, community.URL, trophy.URL, tus.URL, score.URL, update.URL)
+	h, err := server.RemoteHandler(auth, nil, community.URL, trophy.URL, tus.URL, score.URL, update.URL, uploader.URL)
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, path := range []string{"/basic_view/sec/get_self_profile", "/basic_update/sec/update_ci", "/a/cap.png", "/np/resource/title/NPXX00001_00/NPXX00001_00-matching.xml", "/nsx/sec/x/c/NSXWSV/feed.xml", "/user_storage/sec/get_data", "/tss/np/NPWR01234_00/NPWR01234_00-0.tss", "/np/resource/title/NPWR01234_00/storage/NPWR01234_00-storage.xml", "/ranking_update/sec/record_score", "/ranking_view/func/get_ranking", "/ranking_clan_view/func/get_clan_ranking_by_id", "/np/resource/title/NPWR01234_00/ranking/NPWR01234_00-ranking.xml", "/tpl/np/BLUS30001/BLUS30001-ver.xml", "/trophy/sec/sync_trophies", "/np/resource/trophy/trophy-status.xml"} {
+	for _, path := range []string{"/basic_view/sec/get_self_profile", "/basic_update/sec/update_ci", "/a/cap.png", "/np/resource/title/NPXX00001_00/NPXX00001_00-matching.xml", "/nsx/sec/x/c/NSXWSV/feed.xml", "/user_storage/sec/get_data", "/tss/np/NPWR01234_00/NPWR01234_00-0.tss", "/np/resource/title/NPWR01234_00/storage/NPWR01234_00-storage.xml", "/ranking_update/sec/record_score", "/ranking_view/func/get_ranking", "/ranking_clan_view/func/get_clan_ranking_by_id", "/np/resource/title/NPWR01234_00/ranking/NPWR01234_00-ranking.xml", "/tpl/np/BLUS30001/BLUS30001-ver.xml", "/uploader/sec/upload_data", "/uploader/sec/download_data", "/trophy/sec/sync_trophies", "/np/resource/trophy/trophy-status.xml"} {
 		r := httptest.NewRequest("POST", "http://firmware.playstation.net"+path, strings.NewReader("native body"))
 		w := httptest.NewRecorder()
 		h.ServeHTTP(w, r)
@@ -44,6 +46,9 @@ func TestRemoteRoutingAndUnavailableServices(t *testing.T) {
 		}
 		if strings.HasPrefix(path, "/tpl/") {
 			owner = "update"
+		}
+		if strings.HasPrefix(path, "/uploader/") {
+			owner = "uploader"
 		}
 		if strings.Contains(path, "ranking") {
 			owner = "score"
@@ -69,7 +74,7 @@ func TestRemoteRoutingAndUnavailableServices(t *testing.T) {
 		t.Fatal("trophy failure broke community")
 	}
 	for _, bad := range []string{"", "file:///etc/passwd", "http://user:pass@localhost", "http://localhost/path", "http://localhost?query=x"} {
-		if _, err = server.RemoteHandler(auth, nil, bad, trophy.URL, "", "", ""); err == nil {
+		if _, err = server.RemoteHandler(auth, nil, bad, trophy.URL, "", "", "", ""); err == nil {
 			t.Errorf("accepted invalid origin %q", bad)
 		}
 	}

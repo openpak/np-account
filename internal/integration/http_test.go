@@ -61,7 +61,7 @@ func setup(t *testing.T) (*fixture, *fakecore.Core, *coreclient.Client, http.Han
 		mux.ServeHTTP(w, r)
 	}))
 	t.Cleanup(trophyServer.Close)
-	handler, e := server.RemoteHandler(auth, &nav.Service{Auth: auth, Tickets: signer}, communityServer.URL, trophyServer.URL, "", "", "")
+	handler, e := server.RemoteHandler(auth, &nav.Service{Auth: auth, Tickets: signer}, communityServer.URL, trophyServer.URL, "", "", "", "")
 	if e != nil {
 		t.Fatal(e)
 	}

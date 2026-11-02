@@ -13,8 +13,8 @@ import (
 
 // RemoteHandler preserves the existing HTTP/TLS entry point while extracted services own their routes.
 // XMPP is routed directly to np-community and never passes through np-account.
-// tusURL, scoreURL and updateURL are optional: without one its paths fall through to the local 404.
-func RemoteHandler(auth *oauth.Service, issuer *nav.Service, communityURL, trophyURL, tusURL, scoreURL, updateURL string) (http.Handler, error) {
+// tusURL, scoreURL, updateURL and uploaderURL are optional: without one its paths fall through to the local 404.
+func RemoteHandler(auth *oauth.Service, issuer *nav.Service, communityURL, trophyURL, tusURL, scoreURL, updateURL, uploaderURL string) (http.Handler, error) {
 	community, err := remote("NP_COMMUNITY_URL", communityURL)
 	if err != nil {
 		return nil, err
@@ -37,6 +37,7 @@ func RemoteHandler(auth *oauth.Service, issuer *nav.Service, communityURL, troph
 		{"NP_TUS_URL", tusURL, []string{"/user_storage/", "/tss/", "/np/resource/title/{commid}/storage/"}},
 		{"NP_SCORE_URL", scoreURL, []string{"/ranking_update/", "/ranking_view/", "/ranking_clan_view/", "/np/resource/title/{commid}/ranking/"}},
 		{"NP_UPDATE_URL", updateURL, []string{"/tpl/"}},
+		{"NP_UPLOADER_URL", uploaderURL, []string{"/uploader/"}},
 	} {
 		if opt.url == "" {
 			continue
