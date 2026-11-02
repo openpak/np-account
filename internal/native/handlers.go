@@ -49,6 +49,11 @@ func (h *Handler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("POST /native/reg/authenticate.action", h.bindAccount)
 	// No separate CAM server session exists yet. Deletion is idempotent and must
 	// not terminate the user's independently authenticated NP/XMPP session.
+	// Account Information loads these three together (regcam job 0x10c, FUN_00066134 ->
+	// completion FUN_0006d7e8); each reply is parsed for one required element.
+	mux.HandleFunc("POST /native/{service}/getName.action", func(w http.ResponseWriter, r *http.Request) { h.reply(w, NameReply("", "")) })
+	mux.HandleFunc("POST /native/{service}/getOptIn.action", func(w http.ResponseWriter, r *http.Request) { h.reply(w, OptInReply(false, false)) })
+	mux.HandleFunc("POST /native/{service}/getWalOpt.action", func(w http.ResponseWriter, r *http.Request) { h.reply(w, WalletOptionsReply()) })
 	mux.HandleFunc("POST /native/{service}/delSess.action", func(w http.ResponseWriter, r *http.Request) { h.reply(w, Reply()) })
 	// Store guest session: the firmware's country/language/date-of-birth form posts here
 	// (account.country, account.language, account.dob/mob/yob) and expects the authenticate-style
@@ -160,4 +165,40 @@ func (h *Handler) crGuestSess(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	h.reply(w, GuestReply(r.PostForm.Get("account.country"), r.PostForm.Get("account.language")))
+}
+
+// NameReply is the getName reply (regcam FUN_000d8c18): element 0x67 of at least 0x46 bytes,
+// u32 at +0 (kept by the UI, meaning unknown, 0 here), two 33-byte NUL-padded name fields at +4
+// and +0x25, then the required sub-elements 0x65 and 0x66 that the screen displays (first/last
+// order assumed from setName's firstName/lastName fields, unverified on a console). The core
+// stores no first/last name, so the account's names are served empty rather than invented.
+func NameReply(first, last string) []byte {
+	v := make([]byte, 0x46)
+	copy(v[0x04:0x24], first)
+	copy(v[0x25:0x45], last)
+	v = append(v, Elem(0x65, []byte(first))...)
+	v = append(v, Elem(0x66, []byte(last))...)
+	return Reply(Elem(0x67, v))
+}
+
+// OptInReply is the getOptIn reply (regcam FUN_000d8b18): element 0x68, two u32 (the SCE and
+// affiliates mail opt-in flags, setOptIn's scexOptinFlag/affiliatesOptinFlag). The UI treats
+// 2 as on (FUN_0006d7e8), so off is served as 1.
+func OptInReply(sce, affiliates bool) []byte {
+	flag := func(on bool) uint32 {
+		if on {
+			return 2
+		}
+		return 1
+	}
+	v := make([]byte, 8)
+	binary.BigEndian.PutUint32(v, flag(sce))
+	binary.BigEndian.PutUint32(v[4:], flag(affiliates))
+	return Reply(Elem(0x68, v))
+}
+
+// WalletOptionsReply is the getWalOpt reply (regcam FUN_000d89f0): element 0x69, two u32 where
+// any positive value means on. OpenPak has no wallet, so both options are off.
+func WalletOptionsReply() []byte {
+	return Reply(Elem(0x69, make([]byte, 8)))
 }

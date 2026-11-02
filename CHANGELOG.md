@@ -5,6 +5,8 @@
 - Native: getCountries and delSess answer on every service prefix (cam/, reg/, store/, upgrade/, pwd/).
   Account Information sends cam/getCountries after cam/authenticate; the empty catch-all reply
   failed the firmware's 0x5b list lookup and the screen closed with no message.
+- Native: getName, getOptIn and getWalOpt (Account Information's personal-info load) answer with
+  the elements the firmware requires: empty names, mail opt-ins off, wallet options off.
 - Split PS3 account, community/XMPP and native trophies into independent services; share protocol primitives through vendored np-common.
 
 

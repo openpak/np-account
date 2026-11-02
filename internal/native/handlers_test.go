@@ -219,3 +219,57 @@ func TestGetCountriesOnEveryService(t *testing.T) {
 		}
 	}
 }
+
+// elemAt mirrors regcam FUN_000ddf38: walk elements (tag & 0xfff) and require the found one to
+// hold at least min bytes; a missing element is 0x80023087 on the console.
+func elemAt(t *testing.T, b []byte, tag uint16, min int) []byte {
+	t.Helper()
+	for len(b) >= 4 {
+		g, n := binary.BigEndian.Uint16(b)&0xfff, int(binary.BigEndian.Uint16(b[2:]))
+		if n > len(b)-4 {
+			t.Fatalf("element %x truncated", g)
+		}
+		if g == tag {
+			if n < min {
+				t.Fatalf("element %x has %d bytes, firmware needs %d", tag, n, min)
+			}
+			return b[4 : 4+n]
+		}
+		b = b[4+n:]
+	}
+	t.Fatalf("element %x missing", tag)
+	return nil
+}
+
+// Account Information loads name, mail opt-in and wallet options together (regcam job 0x10c,
+// completion FUN_0006d7e8). Parsers: getName FUN_000d8c18 (0x67 >= 0x46, then required 0x65 and
+// 0x66 after the fixed part), getOptIn FUN_000d8b18 (0x68 >= 8), getWalOpt FUN_000d89f0 (0x69 >= 8).
+func TestAccountInformationLoads(t *testing.T) {
+	h := handler(t)
+	for _, svc := range []string{"cam", "reg"} {
+		get := func(action string) []byte {
+			w := post(h, "/native/"+svc+"/"+action+".action", "")
+			b := w.Body.Bytes()
+			if w.Code != 200 || len(b) < 4 || b[1] != 0 {
+				t.Fatalf("%s/%s: status %d reply % x", svc, action, w.Code, b)
+			}
+			return b[4:]
+		}
+		name := elemAt(t, get("getName"), 0x67, 0x46)
+		elemAt(t, name[0x46:], 0x65, 0)
+		elemAt(t, name[0x46:], 0x66, 0)
+		opt := elemAt(t, get("getOptIn"), 0x68, 8)
+		if binary.BigEndian.Uint32(opt) == 2 || binary.BigEndian.Uint32(opt[4:]) == 2 {
+			t.Fatalf("%s/getOptIn: opt-in on by default: % x", svc, opt)
+		}
+		wal := elemAt(t, get("getWalOpt"), 0x69, 8)
+		if !bytes.Equal(wal[:8], make([]byte, 8)) {
+			t.Fatalf("%s/getWalOpt: wallet option set: % x", svc, wal)
+		}
+	}
+	name := elemAt(t, native.NameReply("Leia", "Organa")[4:], 0x67, 0x46)
+	if string(elemAt(t, name[0x46:], 0x65, 0)) != "Leia" || string(elemAt(t, name[0x46:], 0x66, 0)) != "Organa" ||
+		string(name[4:8]) != "Leia" || string(name[0x25:0x2b]) != "Organa" {
+		t.Fatalf("name layout % x", name)
+	}
+}
