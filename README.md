@@ -40,7 +40,6 @@ GOWORK=off go run -mod=vendor ./cmd/np-account
 - [Notes](docs/notes.md)
 - [Handles](docs/handles.md)
 - [Provenance](docs/provenance.md)
-- [PS3 community](docs/ps3-community.md)
 - [Service split](docs/service-split.md)
 
 ## Licence

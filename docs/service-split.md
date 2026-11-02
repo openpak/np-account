@@ -1,9 +1,8 @@
 # Independent PS3 services
 
-Implemented locally on 2026-10-25. Existing np-account and np-trophy repository
+Existing np-account and np-trophy repository
 histories remain intact. np-community and np-common are independent sibling Git
 repositories; their origin URLs name openpak/np-community and openpak/np-common.
-The repositories and release images are published. See the production rollout below.
 
 ## Ownership and contracts
 
@@ -94,42 +93,8 @@ community. Adapt entrypoint names/host rules to the operator's configuration.
 Rollback restores the old account image and original XMPP route. Stop the new
 community service to avoid duplicate sessions. The trophy database schema has not
 changed; the old trophy image and native adapter can use the same database/key.
-Keep signing material unchanged in either direction. Console/Pier visual checks
-and an operator cut-over remain separate from the local automated checks.
+Keep signing material unchanged in either direction.
 
 Matching2 continues to advertise maintenance. Network tests and update discovery
 remain in account for this extraction; moving those to core connectivity can be
 handled independently.
-
-## Local validation
-
-All four modules pass `go test ./...` and `go vet ./...` with workspace mode off.
-Account/community/trophy integration paths also pass the race detector. Native
-and private trophy tests ran against a disposable Postgres 17 database, covering
-schema reuse, persisted sync, first-unlock semantics, account revocation and
-separate public/private listeners. An authenticated XMPP stream survives shutdown
-of the account HTTP server in the integration test.
-
-All three service repositories pass offline tests and vet from isolated source
-copies without sibling repositories. Linux ARM64 executables build from those
-copies using vendor mode (VCS stamping disabled for the copied source contexts).
-Docker builds using Go 1.26 produce all three amd64 images as user `app`:
-`openpak/np-account:split-check`, `openpak/np-community:split-check`, and
-`openpak/np-trophy:split-check`. Workflow YAML and the Compose sample validate.
-Podman build verification hit an overlay-mount limitation on the scratch filesystem;
-Docker completed the same Dockerfiles. Console UI testing remains a separate check.
-
-## Production rollout (2026-10-25)
-
-The independent services are deployed: np-account **0.3.0**, np-community **0.1.1**,
-and np-trophy **0.2.0**. Both image architectures are published and CI passed.
-The live services use separate restricted environment files and pinned release
-references. Community owns public TCP 5223; the existing HTTP/TLS entry point
-and console DNS/trust configuration are preserved.
-
-The existing trophy database and signing, resource and TLS keys were reused.
-Verified native self-profile, canonical roster, trophy reads/discovery, private
-API isolation, network-test HTTP and publicly reachable firmware-compatible TLS.
-An authenticated TLS/XMPP connection continued responding throughout independent
-account and trophy restarts. Original images/configuration and a database dump
-are retained for rollback. No real-console UI or game trophy-sync result is claimed.
