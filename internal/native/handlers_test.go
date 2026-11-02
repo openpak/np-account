@@ -199,3 +199,23 @@ func TestGuestReplyPassesAccountLoaderBounds(t *testing.T) {
 		t.Fatalf("region %x", b)
 	}
 }
+
+// Account Information sends getCountries on the CAM session right after cam/authenticate
+// (regcam 4.93 FUN_0006b044 -> FUN_00079474; the URL prefix comes from the handle kind, table
+// 0x108514 index 6 = "cam/"). FUN_000db718 requires the tag-1 list 0x5b; the old catch-all
+// empty reply failed that lookup and the CAM job posted the error, closing the screen.
+func TestGetCountriesOnEveryService(t *testing.T) {
+	h := handler(t)
+	for _, svc := range []string{"cam", "reg", "store", "upgrade", "pwd"} {
+		b := post(h, "/native/"+svc+"/getCountries.action", "").Body.Bytes()
+		if len(b) < 12 || b[1] != 0 || binary.BigEndian.Uint16(b[4:]) != 1 || binary.BigEndian.Uint16(b[8:]) != 0x5b {
+			t.Fatalf("%s/getCountries: no 0x5b list: % x", svc, b)
+		}
+		if n := binary.BigEndian.Uint16(b[10:]); n == 0 {
+			t.Fatalf("%s/getCountries: empty country list", svc)
+		}
+		if got := post(h, "/native/"+svc+"/delSess.action", "").Body.Bytes(); !bytes.Equal(got, []byte{0, 0, 0, 0}) {
+			t.Fatalf("%s/delSess: % x", svc, got)
+		}
+	}
+}

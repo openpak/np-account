@@ -35,9 +35,13 @@ type Handler struct {
 
 // Register adds the routes to mux.
 func (h *Handler) Register(mux *http.ServeMux) {
-	mux.HandleFunc("POST /native/reg/getCountries.action", h.getCountries)
-	// The store opens with the same country list (empty reply = 0x80023087, element 0x5b list missing).
-	mux.HandleFunc("POST /native/store/getCountries.action", h.getCountries)
+	// regcam sends getCountries on whichever service its session handle was opened for
+	// (table at regcam 0x108514: store/, reg/, cam/, upgrade/, pwd/). The store opens with it
+	// (empty reply = 0x80023087, element 0x5b list missing), and Account Information sends
+	// cam/getCountries right after cam/authenticate (regcam FUN_0006b044 -> FUN_00079474); an
+	// empty reply there fails the 0x5b lookup in FUN_000db718 and the CAM job posts the error,
+	// so Account Information closed silently.
+	mux.HandleFunc("POST /native/{service}/getCountries.action", h.getCountries)
 	mux.HandleFunc("POST /native/reg/bindAccount.action", h.bindAccount)
 	// Authenticate also needs the CAM settings/service projection after identity.
 	// The bindAccount-only reply is insufficient for the account-management UI.
@@ -45,13 +49,11 @@ func (h *Handler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("POST /native/reg/authenticate.action", h.bindAccount)
 	// No separate CAM server session exists yet. Deletion is idempotent and must
 	// not terminate the user's independently authenticated NP/XMPP session.
-	mux.HandleFunc("POST /native/cam/delSess.action", func(w http.ResponseWriter, r *http.Request) { h.reply(w, Reply()) })
-	mux.HandleFunc("POST /native/reg/delSess.action", func(w http.ResponseWriter, r *http.Request) { h.reply(w, Reply()) })
+	mux.HandleFunc("POST /native/{service}/delSess.action", func(w http.ResponseWriter, r *http.Request) { h.reply(w, Reply()) })
 	// Store guest session: the firmware's country/language/date-of-birth form posts here
 	// (account.country, account.language, account.dob/mob/yob) and expects the authenticate-style
 	// account element back. No server state: the guest has no identity, only the echoed region.
 	mux.HandleFunc("POST /native/store/crGuestSess.action", h.crGuestSess)
-	mux.HandleFunc("POST /native/store/delSess.action", func(w http.ResponseWriter, r *http.Request) { h.reply(w, Reply()) })
 	mux.HandleFunc("POST /native/", h.unknown)
 }
 
