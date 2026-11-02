@@ -48,7 +48,7 @@ func run() error {
 	}
 	consumer := &events.Consumer{Core: core, State: standing, Log: slog.Default()}
 	go consumer.Run(ctx, 5*time.Second)
-	handler, err := server.RemoteHandler(svc, issuer, os.Getenv("NP_COMMUNITY_URL"), os.Getenv("NP_TROPHY_URL"), os.Getenv("NP_TUS_URL"), os.Getenv("NP_SCORE_URL"))
+	handler, err := server.RemoteHandler(svc, issuer, os.Getenv("NP_COMMUNITY_URL"), os.Getenv("NP_TROPHY_URL"), os.Getenv("NP_TUS_URL"), os.Getenv("NP_SCORE_URL"), os.Getenv("NP_UPDATE_URL"))
 	if err != nil {
 		return err
 	}
