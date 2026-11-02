@@ -1,7 +1,9 @@
 # Changelog: np-account
 
-## Unreleased
+## v0.3.4 — 2026-11-02
 
+- Forwards `/tpl/` title patch lists to np-update (`NP_UPDATE_URL`) and `/uploader/` message
+  attachments to np-uploader (`NP_UPLOADER_URL`).
 - Native: getCountries and delSess answer on every service prefix (cam/, reg/, store/, upgrade/, pwd/).
   Account Information sends cam/getCountries after cam/authenticate; the empty catch-all reply
   failed the firmware's 0x5b list lookup and the screen closed with no message.
