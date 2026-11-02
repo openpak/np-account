@@ -25,3 +25,7 @@ with sibling repositories present: `GOWORK=off go mod vendor`. Release tags publ
 `ghcr.io/openpak/np-account`; samples in `deploy/` are not applied automatically.
 `cmd/np-account-lab` now serves account routes only with a fake core; it does not
 start community/XMPP. AGPL-3.0-only.
+
+## Ticket key
+
+`NP_TICKET_KEY` enables native `/nav/auth` and holds the owner-local Ed25519 PKCS8 key. Keep that key unchanged during migration. See [the service split and migration guide](service-split.md).

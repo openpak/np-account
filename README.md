@@ -35,9 +35,7 @@ GOWORK=off go run -mod=vendor ./cmd/np-account
 ## Docs
 
 - [Protocol](docs/protocol.md)
-- [Evidence](docs/evidence.md)
 - [Deploy](docs/deploy.md)
-- [Notes](docs/notes.md)
 - [Handles](docs/handles.md)
 - [Provenance](docs/provenance.md)
 - [Service split](docs/service-split.md)
