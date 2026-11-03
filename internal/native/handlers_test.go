@@ -324,15 +324,12 @@ func TestAccountInformationRemainingLoads(t *testing.T) {
 		if binary.BigEndian.Uint16(s)&0xfff != 0x71 || !bytes.Equal(s[2:8], make([]byte, 6)) {
 			t.Fatalf("%s/getSrvs: % x", svc, s)
 		}
-		for _, act := range []string{"setName", "setLid", "setOptIn", "setWalOpt", "remPay"} {
-			if b := get(act); len(b) != 0 {
-				t.Fatalf("%s/%s: unexpected body % x", svc, act, b)
+		// Nothing is persisted, so every save action is "not available": HTTP 503 is the
+		// firmware's 0x80023016, never a success.
+		for _, act := range []string{"setName", "setLid", "setOptIn", "setWalOpt", "remPay", "updPass"} {
+			if w := post(h, "/native/"+svc+"/"+act+".action", "version=25&password=new&currentPassword=pw1"); w.Code != 503 {
+				t.Fatalf("%s/%s: status %d, want 503", svc, act, w.Code)
 			}
-		}
-		// Password change is not available: HTTP 503 is the firmware's 0x80023016, never a success.
-		w := post(h, "/native/"+svc+"/updPass.action", "version=25&password=new&currentPassword=pw1")
-		if w.Code != 503 {
-			t.Fatalf("%s/updPass: status %d, want 503", svc, w.Code)
 		}
 	}
 }

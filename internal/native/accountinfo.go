@@ -100,19 +100,11 @@ func (h *Handler) resAddress(w http.ResponseWriter, r *http.Request) {
 	h.reply(w, ResAddressReply("", "", strings.ToUpper(h.recent.recall(r))))
 }
 
-// ack answers the save actions setName, setLid, setOptIn, setWalOpt and remPay. The firmware only
-// checks the reply prefix for these (FUN_000d5498 returns 0 for any other type), so an empty OK
-// reply is the success the UI shows. Nothing is stored: the core has no such fields, and the next
-// load shows the defaults again.
-func (h *Handler) ack(w http.ResponseWriter, r *http.Request) {
-	h.logger().Info("native: save action acknowledged, not persisted", "path", r.URL.Path)
-	h.reply(w, Reply())
-}
-
-// updPass cannot be honoured: the request carries only password and currentPassword (no account,
-// no cookie) and the account core has no password-change call. A 503 is the firmware's
-// "service unavailable" (0x80023016); a success reply would claim a change that did not happen.
-func (h *Handler) updPass(w http.ResponseWriter, r *http.Request) {
-	h.logger().Info("native: password change refused, not available", "path", r.URL.Path)
-	http.Error(w, "password change not available", http.StatusServiceUnavailable)
+// unavailable answers the save actions setName, setLid, setOptIn, setWalOpt, remPay and updPass.
+// Nothing can be stored: the core has no such fields, the request names no account (no cookie) and
+// there is no password-change call. A success reply would claim a change that did not happen, so
+// the answer is HTTP 503, the firmware's "service unavailable" (0x80023016).
+func (h *Handler) unavailable(w http.ResponseWriter, r *http.Request) {
+	h.logger().Info("native: save action refused, not available", "path", r.URL.Path)
+	http.Error(w, "not available", http.StatusServiceUnavailable)
 }

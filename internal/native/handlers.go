@@ -68,10 +68,9 @@ func (h *Handler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("POST /native/{service}/getTranHist.action", func(w http.ResponseWriter, r *http.Request) { h.reply(w, EmptyListReply(0x6b)) })
 	mux.HandleFunc("POST /native/{service}/getCnslAct.action", func(w http.ResponseWriter, r *http.Request) { h.reply(w, EmptyListReply(0x74)) })
 	mux.HandleFunc("POST /native/{service}/getSrvs.action", func(w http.ResponseWriter, r *http.Request) { h.reply(w, ServicesReply()) })
-	for _, a := range []string{"setName", "setLid", "setOptIn", "setWalOpt", "remPay"} {
-		mux.HandleFunc("POST /native/{service}/"+a+".action", h.ack)
+	for _, a := range []string{"setName", "setLid", "setOptIn", "setWalOpt", "remPay", "updPass"} {
+		mux.HandleFunc("POST /native/{service}/"+a+".action", h.unavailable)
 	}
-	mux.HandleFunc("POST /native/{service}/updPass.action", h.updPass)
 	mux.HandleFunc("POST /native/{service}/delSess.action", func(w http.ResponseWriter, r *http.Request) { h.reply(w, Reply()) })
 	// Store guest session: the firmware's country/language/date-of-birth form posts here
 	// (account.country, account.language, account.dob/mob/yob) and expects the authenticate-style

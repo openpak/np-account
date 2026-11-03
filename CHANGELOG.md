@@ -4,9 +4,9 @@
 
 - Native (Account Information, `/native/{service}/`): getAddr and getResAddr answer with the address
   elements the firmware requires (empty, country from the last authenticate of the same client address);
-  getTranHist, getCnslAct and getSrvs answer with empty lists; setName, setLid, setOptIn, setWalOpt and
-  remPay are acknowledged as success but **nothing is persisted**; updPass answers 503 (not available:
-  the request names no account and the core has no password-change call). The firmware sends no cookie
+  getTranHist, getCnslAct and getSrvs answer with empty lists; setName, setLid, setOptIn, setWalOpt,
+  remPay and updPass answer 503 (firmware "unavailable"): nothing is persisted, the request names no
+  account and the core has no password-change call. The firmware sends no cookie
   after authenticate, so these replies are not per account.
 
 ## v0.3.4 — 2026-11-02
