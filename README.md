@@ -15,6 +15,7 @@ OpenPak's PS3 Account Server.
 | Endpoint | What |
 | --- | --- |
 | `/native/reg/getCountries.action`, `/native/reg/bindAccount.action`, `/nav/auth` | Native account binding and `/nav/auth` tickets |
+| `/native/{reg,cam,store,upgrade,pwd}/*.action` (Account Information) | Name, opt-ins, wallet options, address, history and service lists (empty); save actions acknowledged, not persisted; password change answers 503 |
 | `/2.0/oauth/token`, `/2.0/oauth/authorize`, `/csla/{x}/console/lwConsoleToken` | OAuth and console tokens |
 | `/networktest/*` | Network tests |
 | `/update/ps3/list/{region}/ps3-updatelist.txt` | PS3 update list |

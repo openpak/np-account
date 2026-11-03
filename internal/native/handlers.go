@@ -31,6 +31,15 @@ type Handler struct {
 	Auth      SignIn
 	Countries []Country
 	Log       *slog.Logger
+
+	recent recentAuth
+}
+
+func (h *Handler) logger() *slog.Logger {
+	if h.Log != nil {
+		return h.Log
+	}
+	return slog.Default()
 }
 
 // Register adds the routes to mux.
@@ -54,6 +63,15 @@ func (h *Handler) Register(mux *http.ServeMux) {
 	mux.HandleFunc("POST /native/{service}/getName.action", func(w http.ResponseWriter, r *http.Request) { h.reply(w, NameReply("", "")) })
 	mux.HandleFunc("POST /native/{service}/getOptIn.action", func(w http.ResponseWriter, r *http.Request) { h.reply(w, OptInReply(false, false)) })
 	mux.HandleFunc("POST /native/{service}/getWalOpt.action", func(w http.ResponseWriter, r *http.Request) { h.reply(w, WalletOptionsReply()) })
+	mux.HandleFunc("POST /native/{service}/getAddr.action", h.address)
+	mux.HandleFunc("POST /native/{service}/getResAddr.action", h.resAddress)
+	mux.HandleFunc("POST /native/{service}/getTranHist.action", func(w http.ResponseWriter, r *http.Request) { h.reply(w, EmptyListReply(0x6b)) })
+	mux.HandleFunc("POST /native/{service}/getCnslAct.action", func(w http.ResponseWriter, r *http.Request) { h.reply(w, EmptyListReply(0x74)) })
+	mux.HandleFunc("POST /native/{service}/getSrvs.action", func(w http.ResponseWriter, r *http.Request) { h.reply(w, ServicesReply()) })
+	for _, a := range []string{"setName", "setLid", "setOptIn", "setWalOpt", "remPay"} {
+		mux.HandleFunc("POST /native/{service}/"+a+".action", h.ack)
+	}
+	mux.HandleFunc("POST /native/{service}/updPass.action", h.updPass)
 	mux.HandleFunc("POST /native/{service}/delSess.action", func(w http.ResponseWriter, r *http.Request) { h.reply(w, Reply()) })
 	// Store guest session: the firmware's country/language/date-of-birth form posts here
 	// (account.country, account.language, account.dob/mob/yob) and expects the authenticate-style
@@ -77,10 +95,7 @@ func (h *Handler) getCountries(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) unknown(w http.ResponseWriter, r *http.Request) {
-	log := h.Log
-	if log == nil {
-		log = slog.Default()
-	}
+	log := h.logger()
 	r.Body = http.MaxBytesReader(w, r.Body, maxFormBytes)
 	_ = r.ParseForm()
 	form := r.PostForm
@@ -111,6 +126,7 @@ func (h *Handler) bindAccount(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+	h.recent.remember(r, id.Country)
 	if strings.HasSuffix(r.URL.Path, "/authenticate.action") {
 		h.reply(w, CAMReply(id))
 		return

@@ -273,3 +273,93 @@ func TestAccountInformationLoads(t *testing.T) {
 		t.Fatalf("name layout % x", name)
 	}
 }
+
+// listAt mirrors regcam FUN_000de098: a tag-1 element of >= 4 bytes whose value is u16 id,
+// u16 count, with the wanted id; returns the count.
+func listAt(t *testing.T, b []byte, id uint16) int {
+	t.Helper()
+	v := elemAt(t, b, 1, 4)
+	if binary.BigEndian.Uint16(v)&0xfff != id {
+		t.Fatalf("list id %x, want %x", binary.BigEndian.Uint16(v), id)
+	}
+	return int(binary.BigEndian.Uint16(v[2:]))
+}
+
+// The rest of Account Information (regcam 4.93): address lookups, transaction history, services
+// and console activations load, and the save actions come back as success. Parsers: getAddr
+// FUN_000db818 (0x4f 0x50 0x51 0x52 0x36 0x54), getResAddr FUN_000dbed4 (0x4f 0x52 0x36),
+// getTranHist FUN_000dac38 (list 0x6b), getCnslAct FUN_000daa74 (list 0x74), getSrvs FUN_000dd874
+// (tag-2 list 0x71 via FUN_000de200).
+func TestAccountInformationRemainingLoads(t *testing.T) {
+	h := handler(t)
+	for _, svc := range []string{"cam", "reg"} {
+		get := func(action string) []byte {
+			w := post(h, "/native/"+svc+"/"+action+".action", "")
+			b := w.Body.Bytes()
+			if w.Code != 200 || len(b) < 4 || b[1] != 0 {
+				t.Fatalf("%s/%s: status %d reply % x", svc, action, w.Code, b)
+			}
+			return b[4:]
+		}
+		a := get("getAddr")
+		for _, tag := range []uint16{0x4f, 0x50, 0x51, 0x52, 0x36, 0x54} {
+			if v := elemAt(t, a, tag, 0); len(v) == 0 || v[len(v)-1] != 0 {
+				t.Fatalf("%s/getAddr: element %x is not a C string: % x", svc, tag, v)
+			}
+		}
+		r := get("getResAddr")
+		for _, tag := range []uint16{0x4f, 0x52, 0x36} {
+			if v := elemAt(t, r, tag, 0); len(v) == 0 || v[len(v)-1] != 0 {
+				t.Fatalf("%s/getResAddr: element %x is not a C string: % x", svc, tag, v)
+			}
+		}
+		if n := listAt(t, get("getTranHist"), 0x6b); n != 0 {
+			t.Fatalf("%s/getTranHist: %d entries", svc, n)
+		}
+		if n := listAt(t, get("getCnslAct"), 0x74); n != 0 {
+			t.Fatalf("%s/getCnslAct: %d entries", svc, n)
+		}
+		// FUN_000de200: tag 2, >= 8 bytes, id at +0, count at +2 (kept at struct +0x2c), offset +4, total +6.
+		s := elemAt(t, get("getSrvs"), 2, 8)
+		if binary.BigEndian.Uint16(s)&0xfff != 0x71 || !bytes.Equal(s[2:8], make([]byte, 6)) {
+			t.Fatalf("%s/getSrvs: % x", svc, s)
+		}
+		for _, act := range []string{"setName", "setLid", "setOptIn", "setWalOpt", "remPay"} {
+			if b := get(act); len(b) != 0 {
+				t.Fatalf("%s/%s: unexpected body % x", svc, act, b)
+			}
+		}
+		// Password change is not available: HTTP 503 is the firmware's 0x80023016, never a success.
+		w := post(h, "/native/"+svc+"/updPass.action", "version=25&password=new&currentPassword=pw1")
+		if w.Code != 503 {
+			t.Fatalf("%s/updPass: status %d, want 503", svc, w.Code)
+		}
+	}
+}
+
+// The firmware sends no cookie after authenticate, so the address country is a per-client-address
+// guess from the last authenticate. Without one it is empty, never another account's.
+func TestAddressCountryFromLastAuthenticate(t *testing.T) {
+	h := handler(t)
+	country := func(addr string) string {
+		r := httptest.NewRequest("POST", "/native/cam/getResAddr.action", nil)
+		r.RemoteAddr = addr
+		w := httptest.NewRecorder()
+		h.ServeHTTP(w, r)
+		return strings.TrimRight(string(elemAt(t, w.Body.Bytes()[4:], 0x36, 0)), "\x00")
+	}
+	if got := country("192.0.2.1:1000"); got != "" {
+		t.Fatalf("country before any authenticate = %q", got)
+	}
+	form := url.Values{"version": {"25"}, "username": {"leia@example.org"}, "password": {"pw1"}, "consoleId": {"00"}}.Encode()
+	r := httptest.NewRequest("POST", "/native/cam/authenticate.action", strings.NewReader(form))
+	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	r.RemoteAddr = "192.0.2.1:2000"
+	h.ServeHTTP(httptest.NewRecorder(), r)
+	if got := country("192.0.2.1:3000"); got != "SE" {
+		t.Fatalf("country after authenticate = %q, want SE", got)
+	}
+	if got := country("192.0.2.9:3000"); got != "" {
+		t.Fatalf("other client sees country %q", got)
+	}
+}
