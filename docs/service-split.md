@@ -35,6 +35,7 @@ hosts can continue to reach np-account, which forwards by path:
 - `/ranking_update/`, `/ranking_view/`, `/ranking_clan_view/`, `/np/resource/title/{commid}/ranking/` → `NP_SCORE_URL` (np-score, port 8533; optional).
 - `/tpl/` → `NP_UPDATE_URL` (np-update, port 8534; optional).
 - `/uploader/` → `NP_UPLOADER_URL` (np-uploader, port 8535; optional).
+- `/ubs/`, `/np/resource/ubstorage/` → `NP_UBS_URL` (np-ubs, port 8536; optional).
 - Account, network-test and update-list routes remain local.
 
 Both upstream origins are mandatory and checked at account startup. Forwarding

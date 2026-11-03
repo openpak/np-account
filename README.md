@@ -26,6 +26,7 @@ OpenPak's PS3 Account Server.
 | `/ranking_update/`, `/ranking_view/`, `/ranking_clan_view/`, `/np/resource/title/{commid}/ranking/` | Forwarded to np-score (`NP_SCORE_URL`, optional) |
 | `/tpl/` | Forwarded to np-update (`NP_UPDATE_URL`, optional): title patch lists |
 | `/uploader/` | Forwarded to np-uploader (`NP_UPLOADER_URL`, optional): message attachments |
+| `/ubs/`, `/np/resource/ubstorage/` | Forwarded to np-ubs (`NP_UBS_URL`, optional): Online Storage for save data; 30 min transfer budget |
 
 ## Run
 

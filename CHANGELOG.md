@@ -1,5 +1,10 @@
 # Changelog: np-account
 
+## Unreleased
+
+- Forwards `/ubs/` and `/np/resource/ubstorage/` (PS3 Online Storage for save data) to np-ubs
+  (`NP_UBS_URL`), with a 30 minute read/write budget per request instead of 60 s.
+
 ## v0.3.5 — 2026-11-03
 
 - Forwards `/friend_list_view/` and `/friend_list_update/` (message settings) to np-community.
