@@ -1,6 +1,6 @@
 # Changelog: np-account
 
-## Unreleased
+## v0.3.6 — 2026-11-03
 
 - Forwards `/ubs/` and `/np/resource/ubstorage/` (PS3 Online Storage for save data) to np-ubs
   (`NP_UBS_URL`), with a 30 minute read/write budget per request instead of 60 s.
