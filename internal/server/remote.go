@@ -24,7 +24,7 @@ func RemoteHandler(auth *oauth.Service, issuer *nav.Service, communityURL, troph
 		return nil, err
 	}
 	mux := http.NewServeMux()
-	for _, path := range []string{"/basic_view/", "/basic_update/", "/a/", "/np/resource/title/", "/nsx/"} {
+	for _, path := range []string{"/basic_view/", "/basic_update/", "/friend_list_view/", "/friend_list_update/", "/a/", "/np/resource/title/", "/nsx/"} {
 		mux.Handle(path, community)
 	}
 	for _, path := range []string{"/trophy/", "/np/resource/trophy/"} {

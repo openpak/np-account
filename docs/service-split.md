@@ -29,7 +29,7 @@ No internal sign-in API is introduced and passwords never pass to community or t
 Keep existing DNS and PS3 trust-store configuration. Existing firmware HTTP/S
 hosts can continue to reach np-account, which forwards by path:
 
-- `/basic_view/`, `/basic_update/`, `/a/`, `/np/resource/title/` → `NP_COMMUNITY_URL`.
+- `/basic_view/`, `/basic_update/`, `/friend_list_view/`, `/friend_list_update/`, `/a/`, `/np/resource/title/` → `NP_COMMUNITY_URL`.
 - `/trophy/`, `/np/resource/trophy/` → `NP_TROPHY_URL` (native port 8531).
 - `/user_storage/`, `/tss/`, `/np/resource/title/{commid}/storage/` → `NP_TUS_URL` (np-tus, port 8532; optional).
 - `/ranking_update/`, `/ranking_view/`, `/ranking_clan_view/`, `/np/resource/title/{commid}/ranking/` → `NP_SCORE_URL` (np-score, port 8533; optional).

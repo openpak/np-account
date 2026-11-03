@@ -1,7 +1,8 @@
 # Changelog: np-account
 
-## Unreleased
+## v0.3.5 — 2026-11-03
 
+- Forwards `/friend_list_view/` and `/friend_list_update/` (message settings) to np-community.
 - Native (Account Information, `/native/{service}/`): getAddr and getResAddr answer with the address
   elements the firmware requires (empty, country from the last authenticate of the same client address);
   getTranHist, getCnslAct and getSrvs answer with empty lists; setName, setLid, setOptIn, setWalOpt,
