@@ -1,5 +1,13 @@
 # Changelog: np-account
 
+## v0.3.8 — 2026-11-04
+
+- `NP_CAPTURE_DIR` (np-common v0.2.1 `capture`): when set, every request (any host, any path, so also the
+  PlayStation Store hosts) and every TLS client hello is recorded in full to daily
+  `capture-YYYY-MM-DD.jsonl` files (kept 90 days, mode 0600): host, URI, headers, body up to 16 KiB, status.
+  Credential headers, token/ticket/password-looking values and the bodies of authentication paths are masked
+  or skipped. Unset keeps the one-line access log only. Card #130 P0.
+
 ## v0.3.7 — 2026-11-03
 
 - Every request logs one stderr line, `http <method> <path> -> <status> <duration>ms` (np-common v0.1.2 `httplog`,

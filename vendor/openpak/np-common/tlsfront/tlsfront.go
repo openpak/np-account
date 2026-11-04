@@ -29,6 +29,8 @@ type Front struct {
 	leafKey *rsa.PrivateKey
 	// Fallback names the leaf for a client that sends no SNI (XMPP).
 	Fallback string
+	// Hello, when set, sees every client hello before the leaf is chosen (protocol capture).
+	Hello func(*tls.ClientHelloInfo)
 
 	mu    sync.Mutex
 	cache map[string]*tls.Certificate // ponytail: unbounded; Traefik only passes the PS3 families through
@@ -84,6 +86,9 @@ func (f *Front) Config() *tls.Config {
 			tls.TLS_RSA_WITH_RC4_128_SHA,
 		},
 		GetCertificate: func(hello *tls.ClientHelloInfo) (*tls.Certificate, error) {
+			if f.Hello != nil {
+				f.Hello(hello)
+			}
 			// Exactly as sent: the lab leaves kept the firmware's case
 			// (IV0001-NPXS01001-00.auth...), and its name check may not fold it.
 			name := strings.TrimSuffix(hello.ServerName, ".")

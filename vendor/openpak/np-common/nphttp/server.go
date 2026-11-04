@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"openpak/np-common/capture"
 	"openpak/np-common/tlsfront"
 	"os"
 	"time"
@@ -17,6 +18,17 @@ func Server(addr string, h http.Handler) *http.Server {
 
 // Run binds every listener before serving and shuts all listeners down together.
 func Run(ctx context.Context, h http.Handler, addr, tlsAddr string, front *tlsfront.Front) error {
+	// NP_CAPTURE_DIR turns on full request capture (card #130 P0); unset keeps the plain access log only.
+	rec, err := capture.FromEnv(os.Getenv("NP_CAPTURE_DIR"))
+	if err != nil {
+		return err
+	}
+	if rec != nil {
+		h = rec.Wrap(h)
+		if front != nil {
+			front.Hello = rec.Hello
+		}
+	}
 	servers := []*http.Server{Server(addr, h)}
 	listeners := []net.Listener{}
 	defer func() {
