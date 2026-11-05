@@ -37,9 +37,13 @@ type Core interface {
 type Service struct {
 	Core          Core
 	Tickets       *ticket.Signer
+	MatchingAgent string // NP_MATCHING_AGENT "host:port"; empty = Matching2 maintenance
 	ResourceKey   []byte // owner-local firmware resource compatibility key
 	Client, OS    string
 	AvatarBaseURL string
+	Settings      SettingsStore // message settings; nil answers result ff
+	Chat          Chat          // core-neutral chat (NP_CHAT_ADDR); nil answers friend messages with service-unavailable
+	Inbox         InboxStore    // delivery cursors and PS3-only message extensions; needed with Chat
 }
 
 func (s *Service) Verify(ctx context.Context, raw []byte) (ticket.Identity, error) {

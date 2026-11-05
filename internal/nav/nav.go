@@ -3,7 +3,9 @@ package nav
 import (
 	"encoding/hex"
 	"fmt"
+	"log/slog"
 	"net/http"
+	"sort"
 	"openpak/np-account/internal/oauth"
 	"openpak/np-common/ticket"
 	"regexp"
@@ -49,11 +51,19 @@ func (s *Service) login(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+	cookie := requestCookie(f.Get("cookie"))
+	// Field names only, never values: a game's ticket request may carry fields we have not mapped yet.
+	names := make([]string, 0, len(f))
+	for k := range f {
+		names = append(names, k)
+	}
+	sort.Strings(names)
+	slog.Info("nav/auth", "service", f.Get("serviceid"), "fields", strings.Join(names, ","), "cookie", len(cookie))
 	ttl := s.TTL
 	if ttl == 0 {
 		ttl = time.Hour
 	}
-	b, e := s.Tickets.Issue(ticket.Identity{AccountID: id.AccountID, LinkID: id.LinkID, OnlineID: id.OnlineID, Country: country(id.Country), Birthday: id.Birthday, Service: f.Get("serviceid"), ConsoleID: strings.ToLower(console)}, ttl)
+	b, e := s.Tickets.Issue(ticket.Identity{AccountID: id.AccountID, LinkID: id.LinkID, OnlineID: id.OnlineID, Country: country(id.Country), Birthday: id.Birthday, Service: f.Get("serviceid"), ConsoleID: strings.ToLower(console), Cookie: cookie}, ttl)
 	if e != nil {
 		http.Error(w, "ticket issuance failed", 503)
 		return
@@ -73,4 +83,18 @@ func country(v string) string {
 		return "us"
 	}
 	return v
+}
+
+// requestCookie is the game's ticket-request cookie: 24 bytes, sent as 48 hex digits or raw. Anything
+// else is ignored (the ticket is then issued without one).
+func requestCookie(v string) []byte {
+	if len(v) == 2*ticket.CookieSize {
+		if b, err := hex.DecodeString(v); err == nil {
+			return b
+		}
+	}
+	if len(v) == ticket.CookieSize {
+		return []byte(v)
+	}
+	return nil
 }

@@ -1,5 +1,13 @@
 # Changelog: np-account
 
+## v0.4.0 — 2026-11-05
+
+- `/nav/auth`: a `cookie` form field (24 raw bytes or 48 hex digits) is carried into the NP ticket (np-common v0.3.0), after the firmware's
+  twelve fields and inside the signed envelope. Demonware (Modern Warfare 3 PS3) uses it as the 3DES key of its auth reply
+  (openpak/prds#132). The field name is **unconfirmed**: every `/nav/auth` now logs the request's form field *names* (never values) and the cookie
+  length, so the first game ticket request on Pier shows what the firmware really sends. Tickets without a cookie are byte-for-byte as before.
+- Vendor sync: np-common v0.3.0 and the current np-community package (matching-resource and xmpp changes; the Matching2 recorder stays off).
+
 ## v0.3.8 — 2026-11-04
 
 - `NP_CAPTURE_DIR` (np-common v0.2.1 `capture`): when set, every request (any host, any path, so also the

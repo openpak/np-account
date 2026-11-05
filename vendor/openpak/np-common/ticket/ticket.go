@@ -36,7 +36,14 @@ type Identity struct {
 	ConsoleID string `json:"console"`
 	Issued    int64  `json:"iat"`
 	Expires   int64  `json:"exp"`
+	// Cookie is the 24 bytes a game passes in its ticket request. It is not part of the signed claims
+	// but is written to the end of the ticket body, which the signature covers, so a game server such as
+	// Demonware can use it as the key of its auth reply. Empty when the request carried none.
+	Cookie []byte `json:"-"`
 }
+
+// CookieSize is the length of the game's request cookie.
+const CookieSize = 24
 
 type Signer struct {
 	key ed25519.PrivateKey
@@ -132,11 +139,17 @@ func (s *Signer) Issue(id Identity, ttl time.Duration) ([]byte, error) {
 	region := fixed(id.Country, 4)
 	region[3] = languageEnglishUS
 	dob, status := birthFields(id.Birthday, s.now())
+	if len(id.Cookie) != 0 && len(id.Cookie) != CookieSize {
+		return nil, ErrInvalid
+	}
 	values := [][]byte{nonce, make([]byte, 4), u64(uint64(id.Issued)), u64(uint64(id.Expires)), u64(onlineid.AccountID(id.AccountID)), fixed(id.OnlineID, 32), region, fixed("un", 4), fixed(id.Service, 24), dob, status, make([]byte, 8)}
 	tags := []uint16{8, 1, 7, 7, 2, 4, 8, 4, 8, 0x3011, 1, 7}
 	var body []byte
 	for i, v := range values {
 		body = append(body, elem(tags[i], v)...)
+	}
+	if len(id.Cookie) == CookieSize { // after the firmware's own fields, so their order is untouched
+		body = append(body, elem(8, id.Cookie)...)
 	}
 	out := append([]byte{0x40, 0, 0, 0}, elem(0x3000, body)...)
 	out = append(out, elem(0x3010, nil)...)
@@ -156,30 +169,78 @@ func (s *Signer) Issue(id Identity, ttl time.Duration) ([]byte, error) {
 	return out, nil
 }
 
+// envelope measures the signed part of a ticket: [40 00 00 00], the 0x3000 body, 0x3010 and two
+// blocks of tag 8, up to the 0x3012 OpenPak extension. It returns the offset of that extension and
+// the body (the fields), or ok false.
+func envelope(raw []byte) (end int, body []byte, ok bool) {
+	if len(raw) < 4 || !bytes.Equal(raw[:4], []byte{0x40, 0, 0, 0}) {
+		return 0, nil, false
+	}
+	p := 4
+	for i := 0; ; i++ {
+		if p+4 > len(raw) {
+			return 0, nil, false
+		}
+		tag := binary.BigEndian.Uint16(raw[p:])
+		if tag == 0x3012 {
+			return p, body, i >= 1
+		}
+		hdr, n := 4, int(binary.BigEndian.Uint16(raw[p+2:]))
+		if tag == 0x3000 || tag == 0x3010 {
+			if p+6 > len(raw) {
+				return 0, nil, false
+			}
+			hdr, n = 6, int(binary.BigEndian.Uint32(raw[p+2:]))
+		}
+		if n < 0 || p+hdr+n > len(raw) || i > 8 {
+			return 0, nil, false
+		}
+		if tag == 0x3000 {
+			body = raw[p+hdr : p+hdr+n]
+		}
+		p += hdr + n
+	}
+}
+
 // Verify authenticates the exact issued envelope and claims. Firmware may append
-// device extensions; callers never interpret those as authentication claims.
+// device extensions; callers never interpret those as authentication claims. The
+// body may carry the game's request cookie after the firmware fields.
 func (s *Signer) Verify(raw []byte) (Identity, error) {
 	var id Identity
-	if len(raw) < envelopeSize+4 || len(raw) > 8192 || !bytes.Equal(raw[:4], []byte{0x40, 0, 0, 0}) || binary.BigEndian.Uint16(raw[envelopeSize:]) != 0x3012 {
+	end, body, ok := envelope(raw)
+	if !ok || len(raw) > 8192 || end > envelopeSize+64 {
 		return id, ErrInvalid
 	}
-	n := int(binary.BigEndian.Uint16(raw[envelopeSize+2:]))
-	end := envelopeSize + 4 + n
-	if end > len(raw) || end > MaxSize || n < len(magic)+ed25519.SignatureSize {
+	n := int(binary.BigEndian.Uint16(raw[end+2:]))
+	last := end + 4 + n
+	if last > len(raw) || last > MaxSize || n < len(magic)+ed25519.SignatureSize {
 		return id, ErrInvalid
 	}
-	payload := raw[envelopeSize+4 : end-ed25519.SignatureSize]
-	sig := raw[end-ed25519.SignatureSize : end]
+	payload := raw[end+4 : last-ed25519.SignatureSize]
+	sig := raw[last-ed25519.SignatureSize : last]
 	if !bytes.HasPrefix(payload, magic) {
 		return id, ErrInvalid
 	}
-	signed := append(append([]byte("openpak-np-ticket-v1\x00"), raw[:envelopeSize]...), payload...)
+	signed := append(append([]byte("openpak-np-ticket-v1\x00"), raw[:end]...), payload...)
 	if !ed25519.Verify(s.key.Public().(ed25519.PublicKey), signed, sig) || json.Unmarshal(payload[len(magic):], &id) != nil {
 		return Identity{}, ErrInvalid
 	}
 	now := s.now().UnixMilli()
 	if id.Expires <= now || id.Issued > now+30000 || id.Expires <= id.Issued || id.Expires-id.Issued > int64(24*time.Hour/time.Millisecond) || id.AccountID == "" || id.LinkID == "" || !onlineid.Valid(id.OnlineID) {
 		return Identity{}, ErrInvalid
+	}
+	// Fields 0..11 are the firmware's; a 13th, 24-byte field is the cookie.
+	p, idx := 0, 0
+	for p+4 <= len(body) {
+		l := int(binary.BigEndian.Uint16(body[p+2:]))
+		if p+4+l > len(body) {
+			break
+		}
+		if idx == 12 && l == CookieSize {
+			id.Cookie = append([]byte(nil), body[p+4:p+4+l]...)
+		}
+		p += 4 + l
+		idx++
 	}
 	return id, nil
 }
