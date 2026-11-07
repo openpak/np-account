@@ -1,5 +1,9 @@
 # Changelog: np-account
 
+## v0.4.1 — 2026-11-07
+
+- `/tppkg/` (patch package downloads) is forwarded to np-update next to `/tpl/`, with the long-transfer deadlines. Game patches now pass through to Sony (openpak/prds#158).
+
 ## v0.4.0 — 2026-11-05
 
 - `/nav/auth`: a `cookie` form field (24 raw bytes or 48 hex digits) is carried into the NP ticket (np-common v0.3.0), after the firmware's

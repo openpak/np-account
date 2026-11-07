@@ -24,7 +24,7 @@ OpenPak's PS3 Account Server.
 | `/trophy/`, `/np/resource/trophy/` | Forwarded to np-trophy |
 | `/user_storage/`, `/tss/`, `/np/resource/title/{commid}/storage/` | Forwarded to np-tus (`NP_TUS_URL`, optional) |
 | `/ranking_update/`, `/ranking_view/`, `/ranking_clan_view/`, `/np/resource/title/{commid}/ranking/` | Forwarded to np-score (`NP_SCORE_URL`, optional) |
-| `/tpl/` | Forwarded to np-update (`NP_UPDATE_URL`, optional): title patch lists |
+| `/tpl/`, `/tppkg/` | Forwarded to np-update (`NP_UPDATE_URL`, optional): game patch lists and packages, passed through to Sony |
 | `/uploader/` | Forwarded to np-uploader (`NP_UPLOADER_URL`, optional): message attachments |
 | `/ubs/`, `/np/resource/ubstorage/` | Forwarded to np-ubs (`NP_UBS_URL`, optional): Online Storage for save data; 30 min transfer budget |
 

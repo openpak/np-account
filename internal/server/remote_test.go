@@ -34,7 +34,7 @@ func TestRemoteRoutingAndUnavailableServices(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, path := range []string{"/basic_view/sec/get_self_profile", "/basic_update/sec/update_ci", "/friend_list_view/sec/get_message_setting", "/friend_list_update/sec/set_message_setting", "/a/cap.png", "/np/resource/title/NPXX00001_00/NPXX00001_00-matching.xml", "/nsx/sec/x/c/NSXWSV/feed.xml", "/user_storage/sec/get_data", "/tss/np/NPWR01234_00/NPWR01234_00-0.tss", "/np/resource/title/NPWR01234_00/storage/NPWR01234_00-storage.xml", "/ranking_update/sec/record_score", "/ranking_view/func/get_ranking", "/ranking_clan_view/func/get_clan_ranking_by_id", "/np/resource/title/NPWR01234_00/ranking/NPWR01234_00-ranking.xml", "/tpl/np/BLUS30001/BLUS30001-ver.xml", "/uploader/sec/upload_data", "/uploader/sec/download_data", "/ubs/sec/set_save_data", "/ubs/sec/get_save_data_info_list", "/np/resource/ubstorage/ubstorage.xml", "/trophy/sec/sync_trophies", "/np/resource/trophy/trophy-status.xml"} {
+	for _, path := range []string{"/basic_view/sec/get_self_profile", "/basic_update/sec/update_ci", "/friend_list_view/sec/get_message_setting", "/friend_list_update/sec/set_message_setting", "/a/cap.png", "/np/resource/title/NPXX00001_00/NPXX00001_00-matching.xml", "/nsx/sec/x/c/NSXWSV/feed.xml", "/user_storage/sec/get_data", "/tss/np/NPWR01234_00/NPWR01234_00-0.tss", "/np/resource/title/NPWR01234_00/storage/NPWR01234_00-storage.xml", "/ranking_update/sec/record_score", "/ranking_view/func/get_ranking", "/ranking_clan_view/func/get_clan_ranking_by_id", "/np/resource/title/NPWR01234_00/ranking/NPWR01234_00-ranking.xml", "/tpl/np/BLUS30001/BLUS30001-ver.xml", "/tppkg/np/BLUS30001/x.pkg", "/uploader/sec/upload_data", "/uploader/sec/download_data", "/ubs/sec/set_save_data", "/ubs/sec/get_save_data_info_list", "/np/resource/ubstorage/ubstorage.xml", "/trophy/sec/sync_trophies", "/np/resource/trophy/trophy-status.xml"} {
 		r := httptest.NewRequest("POST", "http://firmware.playstation.net"+path, strings.NewReader("native body"))
 		w := httptest.NewRecorder()
 		h.ServeHTTP(w, r)
@@ -45,7 +45,7 @@ func TestRemoteRoutingAndUnavailableServices(t *testing.T) {
 		if strings.Contains(path, "/user_storage/") || strings.Contains(path, "/tss/") || strings.Contains(path, "/storage/") {
 			owner = "tus"
 		}
-		if strings.HasPrefix(path, "/tpl/") {
+		if (strings.HasPrefix(path, "/tpl/") || strings.HasPrefix(path, "/tppkg/")) {
 			owner = "update"
 		}
 		if strings.HasPrefix(path, "/uploader/") {

@@ -36,7 +36,7 @@ func RemoteHandler(auth *oauth.Service, issuer *nav.Service, communityURL, troph
 	}{
 		{"NP_TUS_URL", tusURL, []string{"/user_storage/", "/tss/", "/np/resource/title/{commid}/storage/"}},
 		{"NP_SCORE_URL", scoreURL, []string{"/ranking_update/", "/ranking_view/", "/ranking_clan_view/", "/np/resource/title/{commid}/ranking/"}},
-		{"NP_UPDATE_URL", updateURL, []string{"/tpl/"}},
+		{"NP_UPDATE_URL", updateURL, []string{"/tpl/", "/tppkg/"}},
 		{"NP_UPLOADER_URL", uploaderURL, []string{"/uploader/"}},
 		{"NP_UBS_URL", ubsURL, []string{"/ubs/", "/np/resource/ubstorage/"}},
 	} {
@@ -47,7 +47,7 @@ func RemoteHandler(auth *oauth.Service, issuer *nav.Service, communityURL, troph
 		if err != nil {
 			return nil, err
 		}
-		if opt.name == "NP_UBS_URL" {
+		if opt.name == "NP_UBS_URL" || opt.name == "NP_UPDATE_URL" {
 			h = longTransfer(h)
 		}
 		for _, path := range opt.paths {
